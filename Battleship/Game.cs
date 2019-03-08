@@ -11,6 +11,7 @@ namespace Battleship
         public static void Main(string[] args)
         {
             BattleField battleField = new BattleField();
+            battleField.CreateShips();
             battleField.CreateFirstRow();
             battleField.CreateBattlefield();
         }

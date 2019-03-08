@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Battleship
@@ -29,8 +30,7 @@ namespace Battleship
             {
                 battleField[rowIndex] = new string[10]; // Create a row of 10 columns/cells
             }
-
-            CreateShips();
+            
             foreach(Ship ship in ships)
             {
                 AddShip(ship);
@@ -74,6 +74,19 @@ namespace Battleship
 
         public void CreateShips()
         {
+            Console.WriteLine("Add your Destroyer to the battlefield. It's size 2. Where do you want to locate it?  ");
+            string input = Console.ReadLine();
+
+            string pattern = "^[a-jA-J](?:[1-9]|0[1-9]|10)$";
+            Regex rgx = new Regex(pattern);
+            bool validInput = rgx.IsMatch(input);
+            if (input != null && validInput)
+            {
+                Console.WriteLine("Place it horizontally (H) or vertically (V)?  ");
+                string position = Console.ReadLine();
+            }
+            
+
             Ship destroyer = new Ship("D", 2, 0, 0, "H");
             Ship aircraftCarrier = new Ship("A", 5, 2, 9, "V");
             Ship submarine = new Ship("S", 4, 3, 5, "H");
