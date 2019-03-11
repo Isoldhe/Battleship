@@ -76,16 +76,38 @@ namespace Battleship
         {
             Console.WriteLine("Add your Destroyer to the battlefield. It's size 2. Where do you want to locate it?  ");
             string input = Console.ReadLine();
+            string xPos = "";
+            string yPos = "";
 
             string pattern = "^[a-jA-J](?:[1-9]|0[1-9]|10)$";
             Regex rgx = new Regex(pattern);
             bool validInput = rgx.IsMatch(input);
             if (input != null && validInput)
             {
+                xPos = input.Substring(0, 1);
+                yPos = input.Remove(0, 1);
+                Console.WriteLine("xPos = " + xPos);
+
                 Console.WriteLine("Place it horizontally (H) or vertically (V)?  ");
                 string position = Console.ReadLine();
+                if (position.ToUpper() == "H" || position.ToUpper() == "V")
+                {
+                    Console.WriteLine("The position is " + position.ToUpper());
+
+                    BoardPosition bp = new BoardPosition();
+                    Dictionary<string, int> hoi = bp.Dictionary;
+                    int test;
+                    if (hoi.TryGetValue(xPos.ToUpper(), out test))
+                    {
+                        Console.WriteLine(test.ToString());
+                    }
+
+                    // A, B, C, ... = rows / XLocation 0, 1, 2, ...
+                    // 1, 2, 3, ... = columns/ YLocation of number - 1
+                    // parse int...
+                    
+                }
             }
-            
 
             Ship destroyer = new Ship("D", 2, 0, 0, "H");
             Ship aircraftCarrier = new Ship("A", 5, 2, 9, "V");
