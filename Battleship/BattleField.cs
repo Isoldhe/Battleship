@@ -9,117 +9,203 @@ namespace Battleship
 {
     class BattleField
     {
-        private string[][] battleField = new string[10][];
-        private List<Ship> ships = new List<Ship>();
 
-        public void CreateFirstRow()
+        private static readonly int PLAYFIELD_LEFT = 2;
+        private static readonly int PLAYFIELD_TOP = 1;
+        private static readonly int PLAYFIELD_HORIZONTAL_SPACING = 2;
+        private static readonly int PLAYFIELD_VERTICAL_SPACING = 1;
+
+        private static readonly int MIN_WIDTH = 5;
+        private static readonly int MAX_WIDTH = 26; //only 26 characters in the alphabet
+        private static readonly int MIN_HEIGHT = 5;
+        private static readonly int MAX_HEIGHT = 30; //perhaps it can be bigger.. depending on the monitor
+
+        private static readonly int DEFAULT_WIDTH = 10;
+        private static readonly int DEFAULT_HEIGHT = 10;
+
+        private readonly char[][] _playField;
+        private readonly List<Ship> _ships = new List<Ship>();
+
+        private int _battleFieldLeft;
+        private int _battleFieldTop;
+
+        public BattleField() : this(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+        { }
+
+        public BattleField(int width, int height)
         {
-            char horizontalCoordinates = 'A';
-            Console.Write("   ");
-            while (horizontalCoordinates < 'K')
+            if (width < MIN_WIDTH) width = MIN_WIDTH;
+            if (width > MAX_WIDTH) width = MAX_WIDTH;
+            if (height < MIN_HEIGHT) height = MIN_HEIGHT;
+            if (height > MAX_HEIGHT) height = MAX_HEIGHT;
+
+            _playField = new char[height][];
+            for (int row = 0; row < height; row++)
             {
-                Console.Write(horizontalCoordinates + " ");
-                horizontalCoordinates++;
+                _playField[row] = new char[width];
             }
-            Console.WriteLine();
+
+            BattleFieldWidthInChars =
+                _playField[0].Length * (PLAYFIELD_HORIZONTAL_SPACING + 1)
+                + PLAYFIELD_HORIZONTAL_SPACING
+                + PLAYFIELD_LEFT;
+            BattleFieldHeightInChars =
+                _playField.Length * (PLAYFIELD_VERTICAL_SPACING + 1)
+                + PLAYFIELD_VERTICAL_SPACING
+                + PLAYFIELD_TOP;
+
+            RefreshField();
         }
 
-        public void CreateBattlefield()
+        public int BattleFieldWidthInChars { get; }
+
+        public int BattleFieldHeightInChars { get; }
+
+        public int BattleFieldLeft
         {
-            for (int rowIndex = 0; rowIndex < battleField.Length; rowIndex++)
+            get => _battleFieldLeft;
+            set
             {
-                battleField[rowIndex] = new string[10]; // Create a row of 10 columns/cells
+                ClearField();
+                _battleFieldLeft = value;
+                RefreshField();
             }
-            
-            foreach(Ship ship in ships)
+        }
+
+        public int BattleFieldTop
+        {
+            get => _battleFieldTop;
+            set
             {
-                AddShip(ship);
+                ClearField();
+                _battleFieldTop = value;
+                RefreshField();
             }
+        }
 
-            int verticalCoordinates = 1;
-            for (int rowIndex = 0; rowIndex < battleField.Length; rowIndex++)
+        private void ClearField()
+        {
+            Console.CursorLeft = BattleFieldLeft;
+            Console.CursorTop = BattleFieldTop;
+            string whiteSpace = string.Empty.PadRight(BattleFieldWidthInChars - 1);
+            for (int i = 0; ; i++)
             {
-                // First column with numbers 1-10
-                Console.Write((rowIndex == 9) ? verticalCoordinates + " " : verticalCoordinates + "  ");
+                Console.Write(whiteSpace);
 
-                // Battlefield board
-                for (int colIndex = 0; colIndex < battleField[rowIndex].Length; colIndex++)
+                if (i >= BattleFieldHeightInChars - 1)
                 {
-                    if (battleField[rowIndex][colIndex] == null)
-                    {
-                        Console.Write("-");
-                    }
-                    Console.Write(battleField[rowIndex][colIndex] + " ");
+                    break;
                 }
-                Console.WriteLine();
-                verticalCoordinates++;
+
+                Console.CursorLeft = BattleFieldLeft;
+                Console.CursorTop++;
             }
         }
 
-        public void AddShip(Ship ship)
+        public void RefreshField()
         {
-            battleField[ship.XLocation][ship.YLocation] = ship.Name;
+            WriteRowIndex();
+            WriteColumnIndex();
+            for (int x = 0; x < _playField[0].Length; x++) //colIndex
+            {
+                for (int y = 0; y < _playField.Length; y++) //rowIndex
+                {
+                    SetCursorToRowColumn(y, x);
+                    char spot = _playField[y][x];
+                    if (char.IsLetter(spot))
+                    {
+                        Console.Write(spot);
+                    }
+                    else
+                    {
+                        Console.Write('~');
+                    }
+                }
+            }
+        }
+
+        public void LoadTestData()
+        {
+            AddShip(new Ship(ShipType.Destroyer, 0, 0, Orientation.Horizontal));
+            AddShip(new Ship(ShipType.AircraftCarrier, 9, 2, Orientation.Vertical));
+            AddShip(new Ship(ShipType.Submarine, 5, 3, Orientation.Horizontal));
+            AddShip(new Ship(ShipType.Cruiser, 3, 1, Orientation.Vertical));
+            AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
+        }
+
+        public bool AddShip(Ship ship)
+        {
+            if (_ships.Any(s => s.ShipType == ship.ShipType))
+            {
+                //cannot add another ship of the same type
+                return false;
+            }
+
             for (int i = 0; i < ship.Size; i++)
             {
-                if (ship.Position == "H")
+                if (ship.Position == Orientation.Horizontal)
                 {
-                    battleField[ship.XLocation][ship.YLocation + i] = ship.Name;
+                    _playField[ship.YLocation][ship.XLocation + i] = ship.Name[0];
                 }
                 else
                 {
-                    battleField[ship.XLocation + i][ship.YLocation] = ship.Name;
+                    _playField[ship.YLocation + i][ship.XLocation] = ship.Name[0];
                 }
+            }
+            _ships.Add(ship);
+
+            return true;
+        }
+
+        private void SetCursorToRowColumn(int row, int column)
+        {
+            Console.SetCursorPosition(
+                ColumnToCursorPosition(column),
+                RowToCursorPosition(row));
+        }
+
+        private int RowToCursorPosition(int row)
+        {
+            return 
+                row * (PLAYFIELD_VERTICAL_SPACING + 1) 
+                + PLAYFIELD_VERTICAL_SPACING
+                + PLAYFIELD_TOP
+                + _battleFieldTop;
+        }
+
+        private int ColumnToCursorPosition(int column)
+        {
+            return 
+                column * (PLAYFIELD_HORIZONTAL_SPACING + 1)
+                + PLAYFIELD_HORIZONTAL_SPACING
+                + PLAYFIELD_LEFT
+                + _battleFieldLeft;
+        }
+
+        private void WriteRowIndex()
+        {
+            int verticalCoordinates = 1;
+
+            Console.SetCursorPosition(BattleFieldLeft, PLAYFIELD_TOP);
+
+            for (int row = 0; row < _playField.Length; row++)
+            {
+                Console.CursorTop = RowToCursorPosition(row);
+                Console.CursorLeft = BattleFieldLeft;
+                Console.Write(verticalCoordinates++);
             }
         }
 
-        public void CreateShips()
+        private void WriteColumnIndex()
         {
-            Console.WriteLine("Add your Destroyer to the battlefield. It's size 2. Where do you want to locate it?  ");
-            string input = Console.ReadLine();
-            string xPos = "";
-            string yPos = "";
+            char horizontalCoordinates = 'A';
+            Console.SetCursorPosition(PLAYFIELD_LEFT, BattleFieldTop);
 
-            string pattern = "^[a-jA-J](?:[1-9]|0[1-9]|10)$";
-            Regex rgx = new Regex(pattern);
-            bool validInput = rgx.IsMatch(input);
-            if (input != null && validInput)
+            for (int column = 0; column < _playField[0].Length; column++)
             {
-                xPos = input.Substring(0, 1);
-                yPos = input.Remove(0, 1);
-                Console.WriteLine("xPos = " + xPos);
-
-                Console.WriteLine("Place it horizontally (H) or vertically (V)?  ");
-                string position = Console.ReadLine();
-                if (position.ToUpper() == "H" || position.ToUpper() == "V")
-                {
-                    Console.WriteLine("The position is " + position.ToUpper());
-
-                    BoardPosition bp = new BoardPosition();
-                    Dictionary<string, int> hoi = bp.Dictionary;
-                    int test;
-                    if (hoi.TryGetValue(xPos.ToUpper(), out test))
-                    {
-                        Console.WriteLine(test.ToString());
-                    }
-
-                    // A, B, C, ... = rows / XLocation 0, 1, 2, ...
-                    // 1, 2, 3, ... = columns/ YLocation of number - 1
-                    // parse int...
-                    
-                }
+                Console.CursorLeft = ColumnToCursorPosition(column);
+                Console.Write(horizontalCoordinates++);
             }
-
-            Ship destroyer = new Ship("D", 2, 0, 0, "H");
-            Ship aircraftCarrier = new Ship("A", 5, 2, 9, "V");
-            Ship submarine = new Ship("S", 4, 3, 5, "H");
-            Ship cruiser = new Ship("C", 3, 1, 3, "V");
-            Ship battleship = new Ship("B", 3, 7, 6, "V");
-
-            ships.Add(destroyer);
-            ships.Add(aircraftCarrier);
-            ships.Add(submarine);
-            ships.Add(cruiser);
-            ships.Add(battleship);
         }
     }
 }
