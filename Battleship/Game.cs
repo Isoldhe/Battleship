@@ -61,6 +61,7 @@ namespace Battleship
                         _battleField.RefreshField();
                         break;
                     default:
+                        string key = keyStroke.KeyChar.ToString();
                         //do nothing
                         break;
                 }
