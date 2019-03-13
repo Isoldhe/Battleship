@@ -26,7 +26,7 @@ namespace Battleship.DisplayElements
         private static readonly int DEFAULT_WIDTH = 10;
         private static readonly int DEFAULT_HEIGHT = 10;
 
-        private readonly char[][] _playField;
+        private readonly BoardPosition[][] _playField;
         private readonly List<Ship> _ships = new List<Ship>();
 
         public BattleField() : this(DEFAULT_WIDTH, DEFAULT_HEIGHT)
@@ -39,10 +39,16 @@ namespace Battleship.DisplayElements
             if (height < MIN_HEIGHT) height = MIN_HEIGHT;
             if (height > MAX_HEIGHT) height = MAX_HEIGHT;
 
-            _playField = new char[height][];
+            _playField = new BoardPosition[height][];
             for (int row = 0; row < height; row++)
             {
-                _playField[row] = new char[width];
+                _playField[row] = new BoardPosition[width];
+                for (int column = 0; column < width; column++)
+                {
+                    var position = new BoardPosition(row, column);
+                    _playField[row][column] = position;
+                    BoardPositions[position.Coordinates] = position;
+                }
             }
 
             _width =
@@ -55,6 +61,8 @@ namespace Battleship.DisplayElements
                 + PLAYFIELD_TOP;
         }
 
+        public Dictionary<string, BoardPosition> BoardPositions { get; } = new Dictionary<string, BoardPosition>(StringComparer.OrdinalIgnoreCase);
+
         public override void Redraw()
         {
             WriteRowIndex();
@@ -64,7 +72,7 @@ namespace Battleship.DisplayElements
                 for (int y = 0; y < _playField.Length; y++) //rowIndex
                 {
                     SetCursorToRowColumn(y, x);
-                    char spot = _playField[y][x];
+                    char spot = _playField[y][x].Value;
                     if (char.IsLetter(spot))
                     {
                         Console.Write(spot);
@@ -98,11 +106,11 @@ namespace Battleship.DisplayElements
             {
                 if (ship.Position == Orientation.Horizontal)
                 {
-                    _playField[ship.YLocation][ship.XLocation + i] = ship.Name[0];
+                    _playField[ship.YLocation][ship.XLocation + i].Value = ship.Name[0];
                 }
                 else
                 {
-                    _playField[ship.YLocation + i][ship.XLocation] = ship.Name[0];
+                    _playField[ship.YLocation + i][ship.XLocation].Value = ship.Name[0];
                 }
             }
             _ships.Add(ship);

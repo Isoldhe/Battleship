@@ -8,23 +8,22 @@ namespace Battleship.GameModels
 {
     public class BoardPosition
     {
-        public Dictionary<string, char> Dictionary { get; }
-
-        public BoardPosition()
+        public BoardPosition(int row, int column)
         {
-            Dictionary = new Dictionary<string, char>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "a", '0' },
-                { "b", '1' },
-                { "c", '2' },
-                { "d", '3' },
-                { "e", '4' },
-                { "f", '5' },
-                { "g", '6' },
-                { "h", '7' },
-                { "i", '8' },
-                { "j", '9' }
-            };
+            Coordinates = $"{(char)('A' + column)}{1 + row}";
+            Row = row;
+            Column = column;
+            Value = ' ';
+        }
+
+        public string Coordinates { get; }
+        public int Row { get; }
+        public int Column { get; }
+        public char Value { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Coordinates}: [{Value}]";
         }
     }
 }
