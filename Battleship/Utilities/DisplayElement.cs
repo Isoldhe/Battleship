@@ -13,6 +13,17 @@ namespace Battleship.Utilities
         protected int _width;
         protected int _height;
 
+        protected void Clear()
+        {
+            string whitespace = string.Empty.PadRight(Width);
+            for (int i = 0; i < Height; i++)
+            {
+                Console.CursorLeft = Left;
+                Console.CursorTop = Top + i;
+                Console.Write(whitespace);
+            }
+        }
+
         public abstract void Redraw();
 
         public virtual int Top

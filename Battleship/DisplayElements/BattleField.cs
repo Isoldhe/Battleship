@@ -85,15 +85,6 @@ namespace Battleship.DisplayElements
             }
         }
 
-        public void LoadTestData()
-        {
-            AddShip(new Ship(ShipType.Destroyer, 0, 0, Orientation.Horizontal));
-            AddShip(new Ship(ShipType.AircraftCarrier, 9, 2, Orientation.Vertical));
-            AddShip(new Ship(ShipType.Submarine, 5, 3, Orientation.Horizontal));
-            AddShip(new Ship(ShipType.Cruiser, 3, 1, Orientation.Vertical));
-            AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
-        }
-
         public bool AddShip(Ship ship)
         {
             if (_ships.Any(s => s.ShipType == ship.ShipType))

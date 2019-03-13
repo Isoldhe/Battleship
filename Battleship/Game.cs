@@ -1,4 +1,6 @@
 using Battleship.DisplayElements;
+using Battleship.Enums;
+using Battleship.GameModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +13,7 @@ namespace Battleship
     {
         private BattleField _battleField;
         private Display _display;
+        private StatusBar _statusBar;
 
         public Game()
         {
@@ -22,9 +25,26 @@ namespace Battleship
                 Left = 1,
                 Top = 1,
             };
-            _battleField.LoadTestData();
+
+            LoadTestData();
+
+            _statusBar = new StatusBar(3, 50)
+            {
+                Left = 1,
+                Top = _battleField.Top + _battleField.Height + 1,
+            };
 
             _display.AddElement(_battleField);
+            _display.AddElement(_statusBar);
+        }
+
+        private void LoadTestData()
+        {
+            _battleField.AddShip(new Ship(ShipType.Destroyer, 0, 0, Orientation.Horizontal));
+            _battleField.AddShip(new Ship(ShipType.AircraftCarrier, 9, 2, Orientation.Vertical));
+            _battleField.AddShip(new Ship(ShipType.Submarine, 5, 3, Orientation.Horizontal));
+            _battleField.AddShip(new Ship(ShipType.Cruiser, 3, 1, Orientation.Vertical));
+            _battleField.AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
         }
 
         public void Run()
