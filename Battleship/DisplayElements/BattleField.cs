@@ -1,11 +1,14 @@
-﻿using System;
+﻿using Battleship.Enums;
+using Battleship.GameModels;
+using Battleship.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Battleship
+namespace Battleship.DisplayElements
 {
     public class BattleField : DisplayElement
     {

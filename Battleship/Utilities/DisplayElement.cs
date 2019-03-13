@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Battleship
+namespace Battleship.Utilities
 {
     public delegate void DisplayElementChangedEvent();
 

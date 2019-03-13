@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Battleship
+namespace Battleship.GameModels
 {
-    class BoardPosition
+    public class BoardPosition
     {
         public Dictionary<string, char> Dictionary { get; }
 
