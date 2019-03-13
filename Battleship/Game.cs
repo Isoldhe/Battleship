@@ -9,20 +9,21 @@ namespace Battleship
     public class Game
     {
         private BattleField _battleField;
+        private Display _display;
 
         public Game()
         {
+            _display = new Display();
+
             //TODO initialize battlefield according to player preferences
             _battleField = new BattleField()
             {
-                BattleFieldLeft = 1,
-                BattleFieldTop = 1,
+                Left = 1,
+                Top = 1,
             };
             _battleField.LoadTestData();
 
-            ResetView(_battleField.BattleFieldWidthInChars + 1, _battleField.BattleFieldHeightInChars + 1);
-
-            _battleField.RefreshField();
+            _display.AddElement(_battleField);
         }
 
         public void Run()
@@ -36,16 +37,16 @@ namespace Battleship
                     //TODO implement cursor
                     //currently this feature shifts the field.. not very helpful but maybe funny
                     case ConsoleKey.LeftArrow:
-                        _battleField.BattleFieldLeft--;
+                        _battleField.Left--;
                         break;
                     case ConsoleKey.UpArrow:
-                        _battleField.BattleFieldTop--;
+                        _battleField.Top--;
                         break;
                     case ConsoleKey.RightArrow:
-                        _battleField.BattleFieldLeft++;
+                        _battleField.Left++;
                         break;
                     case ConsoleKey.DownArrow:
-                        _battleField.BattleFieldTop++;
+                        _battleField.Top++;
                         break;
 
 
@@ -56,10 +57,6 @@ namespace Battleship
                     case ConsoleKey.Escape:
                         //quit
                         return;
-                    case ConsoleKey.R:
-                        ResetView(_battleField.BattleFieldWidthInChars + 10, _battleField.BattleFieldHeightInChars + 10);
-                        _battleField.RefreshField();
-                        break;
                     default:
                         string key = keyStroke.KeyChar.ToString();
                         //do nothing
@@ -68,16 +65,5 @@ namespace Battleship
             }
         }
 
-        public void ResetView(int totalWidth, int totalHeight)
-        {
-            Console.CursorVisible = false;
-            Console.Clear();
-
-            Console.SetWindowSize(totalWidth, totalHeight);
-            Console.SetBufferSize(totalWidth, totalHeight);
-
-            //set size again after setting buffer to clear the scrollbar area
-            Console.SetWindowSize(totalWidth, totalHeight);
-        }
     }
 }

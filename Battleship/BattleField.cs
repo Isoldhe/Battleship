@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Battleship
 {
-    class BattleField
+    public class BattleField : DisplayElement
     {
 
         private static readonly int PLAYFIELD_LEFT = 2;
@@ -26,9 +26,6 @@ namespace Battleship
         private readonly char[][] _playField;
         private readonly List<Ship> _ships = new List<Ship>();
 
-        private int _battleFieldLeft;
-        private int _battleFieldTop;
-
         public BattleField() : this(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         { }
 
@@ -45,64 +42,17 @@ namespace Battleship
                 _playField[row] = new char[width];
             }
 
-            BattleFieldWidthInChars =
+            _width =
                 _playField[0].Length * (PLAYFIELD_HORIZONTAL_SPACING + 1)
                 + PLAYFIELD_HORIZONTAL_SPACING
                 + PLAYFIELD_LEFT;
-            BattleFieldHeightInChars =
+            _height =
                 _playField.Length * (PLAYFIELD_VERTICAL_SPACING + 1)
                 + PLAYFIELD_VERTICAL_SPACING
                 + PLAYFIELD_TOP;
-
-            RefreshField();
         }
 
-        public int BattleFieldWidthInChars { get; }
-
-        public int BattleFieldHeightInChars { get; }
-
-        public int BattleFieldLeft
-        {
-            get => _battleFieldLeft;
-            set
-            {
-                ClearField();
-                _battleFieldLeft = value;
-                RefreshField();
-            }
-        }
-
-        public int BattleFieldTop
-        {
-            get => _battleFieldTop;
-            set
-            {
-                ClearField();
-                _battleFieldTop = value;
-                RefreshField();
-            }
-        }
-
-        private void ClearField()
-        {
-            Console.CursorLeft = BattleFieldLeft;
-            Console.CursorTop = BattleFieldTop;
-            string whiteSpace = string.Empty.PadRight(BattleFieldWidthInChars - 1);
-            for (int i = 0; ; i++)
-            {
-                Console.Write(whiteSpace);
-
-                if (i >= BattleFieldHeightInChars - 1)
-                {
-                    break;
-                }
-
-                Console.CursorLeft = BattleFieldLeft;
-                Console.CursorTop++;
-            }
-        }
-
-        public void RefreshField()
+        public override void Redraw()
         {
             WriteRowIndex();
             WriteColumnIndex();
@@ -170,7 +120,7 @@ namespace Battleship
                 row * (PLAYFIELD_VERTICAL_SPACING + 1) 
                 + PLAYFIELD_VERTICAL_SPACING
                 + PLAYFIELD_TOP
-                + _battleFieldTop;
+                + Top;
         }
 
         private int ColumnToCursorPosition(int column)
@@ -179,19 +129,19 @@ namespace Battleship
                 column * (PLAYFIELD_HORIZONTAL_SPACING + 1)
                 + PLAYFIELD_HORIZONTAL_SPACING
                 + PLAYFIELD_LEFT
-                + _battleFieldLeft;
+                + Left;
         }
 
         private void WriteRowIndex()
         {
             int verticalCoordinates = 1;
 
-            Console.SetCursorPosition(BattleFieldLeft, PLAYFIELD_TOP);
+            Console.SetCursorPosition(Left, PLAYFIELD_TOP);
 
             for (int row = 0; row < _playField.Length; row++)
             {
                 Console.CursorTop = RowToCursorPosition(row);
-                Console.CursorLeft = BattleFieldLeft;
+                Console.CursorLeft = Left;
                 Console.Write(verticalCoordinates++);
             }
         }
@@ -199,7 +149,7 @@ namespace Battleship
         private void WriteColumnIndex()
         {
             char horizontalCoordinates = 'A';
-            Console.SetCursorPosition(PLAYFIELD_LEFT, BattleFieldTop);
+            Console.SetCursorPosition(PLAYFIELD_LEFT, Top);
 
             for (int column = 0; column < _playField[0].Length; column++)
             {

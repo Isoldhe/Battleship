@@ -44,6 +44,8 @@
   <ItemGroup>
     <Compile Include="BattleField.cs" />
     <Compile Include="BoardPosition.cs" />
+    <Compile Include="Display.cs" />
+    <Compile Include="DisplayElement.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ShipType.cs" />
