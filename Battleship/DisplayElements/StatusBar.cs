@@ -35,10 +35,15 @@ namespace Battleship.DisplayElements
             var lines = Status.WordWrap(Width, Height);
 
             Console.SetCursorPosition(Left, Top);
+            bool preventFinalCharacterWrite = Left + Width == Console.WindowWidth;
             for (int i = 0; i < lines.Count; i++)
             {
                 Console.CursorLeft = Left;
                 Console.CursorTop = Top + i;
+
+                if (preventFinalCharacterWrite && Top + i + 1 == Console.WindowHeight)
+                    lines[i] = lines[i].Remove(0, 1);
+
                 Console.Write(lines[i]);
             }
         }
