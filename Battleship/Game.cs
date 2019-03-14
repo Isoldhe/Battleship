@@ -1,7 +1,11 @@
+using Battleship.DisplayElements;
+using Battleship.Enums;
+using Battleship.GameModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Battleship
@@ -9,20 +13,40 @@ namespace Battleship
     public class Game
     {
         private BattleField _battleField;
+        private Display _display;
+        private StatusBar _statusBar;
 
         public Game()
         {
+            _display = new Display();
+
             //TODO initialize battlefield according to player preferences
             _battleField = new BattleField()
             {
-                BattleFieldLeft = 1,
-                BattleFieldTop = 1,
+                Left = 1,
+                Top = 1,
             };
-            _battleField.LoadTestData();
 
-            ResetView(_battleField.BattleFieldWidthInChars + 1, _battleField.BattleFieldHeightInChars + 1);
+            LoadTestData();
 
-            _battleField.RefreshField();
+            _statusBar = new StatusBar(3, 50)
+            {
+                Left = 1,
+                Top = _battleField.Top + _battleField.Height + 1,
+                Status = "Press one of the arrow keys and be surprised by the result. If you dare, press Enter."
+            };
+
+            _display.AddElement(_battleField);
+            _display.AddElement(_statusBar);
+        }
+
+        private void LoadTestData()
+        {
+            _battleField.AddShip(new Ship(ShipType.Destroyer, 0, 0, Orientation.Horizontal));
+            _battleField.AddShip(new Ship(ShipType.AircraftCarrier, 9, 2, Orientation.Vertical));
+            _battleField.AddShip(new Ship(ShipType.Submarine, 5, 3, Orientation.Horizontal));
+            _battleField.AddShip(new Ship(ShipType.Cruiser, 3, 1, Orientation.Vertical));
+            _battleField.AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
         }
 
         public void Run()
@@ -36,30 +60,31 @@ namespace Battleship
                     //TODO implement cursor
                     //currently this feature shifts the field.. not very helpful but maybe funny
                     case ConsoleKey.LeftArrow:
-                        _battleField.BattleFieldLeft--;
+                        _battleField.Left--;
                         break;
                     case ConsoleKey.UpArrow:
-                        _battleField.BattleFieldTop--;
+                        _battleField.Top--;
                         break;
                     case ConsoleKey.RightArrow:
-                        _battleField.BattleFieldLeft++;
+                        _battleField.Left++;
                         break;
                     case ConsoleKey.DownArrow:
-                        _battleField.BattleFieldTop++;
+                        _battleField.Top++;
                         break;
 
 
                     case ConsoleKey.Enter:
                     case ConsoleKey.Spacebar:
                         //TODO accept input
+                        _statusBar.Status = "OMG YOU PRESSED THE WRONG BUTTON NOW EVERYTHING WILL EXPLODE .. " +
+                            "3 .. 2 .. 1 .... .. . ... .. ............................";
+                        Thread.Sleep(2500);
+                        _statusBar.Status = "BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM!!!!";
+                        Thread.Sleep(700);
                         break;
                     case ConsoleKey.Escape:
                         //quit
                         return;
-                    case ConsoleKey.R:
-                        ResetView(_battleField.BattleFieldWidthInChars + 10, _battleField.BattleFieldHeightInChars + 10);
-                        _battleField.RefreshField();
-                        break;
                     default:
                         string key = keyStroke.KeyChar.ToString();
                         //do nothing
@@ -68,16 +93,5 @@ namespace Battleship
             }
         }
 
-        public void ResetView(int totalWidth, int totalHeight)
-        {
-            Console.CursorVisible = false;
-            Console.Clear();
-
-            Console.SetWindowSize(totalWidth, totalHeight);
-            Console.SetBufferSize(totalWidth, totalHeight);
-
-            //set size again after setting buffer to clear the scrollbar area
-            Console.SetWindowSize(totalWidth, totalHeight);
-        }
     }
 }

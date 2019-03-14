@@ -42,14 +42,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BattleField.cs" />
-    <Compile Include="BoardPosition.cs" />
+    <Compile Include="DisplayElements\BattleField.cs" />
+    <Compile Include="GameModels\BoardPosition.cs" />
+    <Compile Include="Display.cs" />
+    <Compile Include="Utilities\DisplayElement.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="ShipType.cs" />
-    <Compile Include="Orientation.cs" />
+    <Compile Include="Enums\ShipType.cs" />
+    <Compile Include="Enums\Orientation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Ship.cs" />
+    <Compile Include="GameModels\Ship.cs" />
+    <Compile Include="DisplayElements\StatusBar.cs" />
+    <Compile Include="Utilities\ExtensionMethods.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

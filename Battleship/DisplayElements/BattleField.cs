@@ -1,13 +1,16 @@
-﻿using System;
+﻿using Battleship.Enums;
+using Battleship.GameModels;
+using Battleship.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Battleship
+namespace Battleship.DisplayElements
 {
-    class BattleField
+    public class BattleField : DisplayElement
     {
 
         private static readonly int PLAYFIELD_LEFT = 2;
@@ -23,11 +26,8 @@ namespace Battleship
         private static readonly int DEFAULT_WIDTH = 10;
         private static readonly int DEFAULT_HEIGHT = 10;
 
-        private readonly char[][] _playField;
+        private readonly BoardPosition[][] _playField;
         private readonly List<Ship> _ships = new List<Ship>();
-
-        private int _battleFieldLeft;
-        private int _battleFieldTop;
 
         public BattleField() : this(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         { }
@@ -39,70 +39,31 @@ namespace Battleship
             if (height < MIN_HEIGHT) height = MIN_HEIGHT;
             if (height > MAX_HEIGHT) height = MAX_HEIGHT;
 
-            _playField = new char[height][];
+            _playField = new BoardPosition[height][];
             for (int row = 0; row < height; row++)
             {
-                _playField[row] = new char[width];
+                _playField[row] = new BoardPosition[width];
+                for (int column = 0; column < width; column++)
+                {
+                    var position = new BoardPosition(row, column);
+                    _playField[row][column] = position;
+                    BoardPositions[position.Coordinates] = position;
+                }
             }
 
-            BattleFieldWidthInChars =
+            _width =
                 _playField[0].Length * (PLAYFIELD_HORIZONTAL_SPACING + 1)
                 + PLAYFIELD_HORIZONTAL_SPACING
                 + PLAYFIELD_LEFT;
-            BattleFieldHeightInChars =
+            _height =
                 _playField.Length * (PLAYFIELD_VERTICAL_SPACING + 1)
                 + PLAYFIELD_VERTICAL_SPACING
                 + PLAYFIELD_TOP;
-
-            RefreshField();
         }
 
-        public int BattleFieldWidthInChars { get; }
+        public Dictionary<string, BoardPosition> BoardPositions { get; } = new Dictionary<string, BoardPosition>(StringComparer.OrdinalIgnoreCase);
 
-        public int BattleFieldHeightInChars { get; }
-
-        public int BattleFieldLeft
-        {
-            get => _battleFieldLeft;
-            set
-            {
-                ClearField();
-                _battleFieldLeft = value;
-                RefreshField();
-            }
-        }
-
-        public int BattleFieldTop
-        {
-            get => _battleFieldTop;
-            set
-            {
-                ClearField();
-                _battleFieldTop = value;
-                RefreshField();
-            }
-        }
-
-        private void ClearField()
-        {
-            Console.CursorLeft = BattleFieldLeft;
-            Console.CursorTop = BattleFieldTop;
-            string whiteSpace = string.Empty.PadRight(BattleFieldWidthInChars - 1);
-            for (int i = 0; ; i++)
-            {
-                Console.Write(whiteSpace);
-
-                if (i >= BattleFieldHeightInChars - 1)
-                {
-                    break;
-                }
-
-                Console.CursorLeft = BattleFieldLeft;
-                Console.CursorTop++;
-            }
-        }
-
-        public void RefreshField()
+        public override void Redraw()
         {
             WriteRowIndex();
             WriteColumnIndex();
@@ -111,7 +72,7 @@ namespace Battleship
                 for (int y = 0; y < _playField.Length; y++) //rowIndex
                 {
                     SetCursorToRowColumn(y, x);
-                    char spot = _playField[y][x];
+                    char spot = _playField[y][x].Value;
                     if (char.IsLetter(spot))
                     {
                         Console.Write(spot);
@@ -122,15 +83,6 @@ namespace Battleship
                     }
                 }
             }
-        }
-
-        public void LoadTestData()
-        {
-            AddShip(new Ship(ShipType.Destroyer, 0, 0, Orientation.Horizontal));
-            AddShip(new Ship(ShipType.AircraftCarrier, 9, 2, Orientation.Vertical));
-            AddShip(new Ship(ShipType.Submarine, 5, 3, Orientation.Horizontal));
-            AddShip(new Ship(ShipType.Cruiser, 3, 1, Orientation.Vertical));
-            AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
         }
 
         public bool AddShip(Ship ship)
@@ -145,11 +97,11 @@ namespace Battleship
             {
                 if (ship.Position == Orientation.Horizontal)
                 {
-                    _playField[ship.YLocation][ship.XLocation + i] = ship.Name[0];
+                    _playField[ship.YLocation][ship.XLocation + i].Value = ship.Name[0];
                 }
                 else
                 {
-                    _playField[ship.YLocation + i][ship.XLocation] = ship.Name[0];
+                    _playField[ship.YLocation + i][ship.XLocation].Value = ship.Name[0];
                 }
             }
             _ships.Add(ship);
@@ -170,7 +122,7 @@ namespace Battleship
                 row * (PLAYFIELD_VERTICAL_SPACING + 1) 
                 + PLAYFIELD_VERTICAL_SPACING
                 + PLAYFIELD_TOP
-                + _battleFieldTop;
+                + Top;
         }
 
         private int ColumnToCursorPosition(int column)
@@ -179,19 +131,19 @@ namespace Battleship
                 column * (PLAYFIELD_HORIZONTAL_SPACING + 1)
                 + PLAYFIELD_HORIZONTAL_SPACING
                 + PLAYFIELD_LEFT
-                + _battleFieldLeft;
+                + Left;
         }
 
         private void WriteRowIndex()
         {
             int verticalCoordinates = 1;
 
-            Console.SetCursorPosition(BattleFieldLeft, PLAYFIELD_TOP);
+            Console.SetCursorPosition(Left, PLAYFIELD_TOP);
 
             for (int row = 0; row < _playField.Length; row++)
             {
                 Console.CursorTop = RowToCursorPosition(row);
-                Console.CursorLeft = BattleFieldLeft;
+                Console.CursorLeft = Left;
                 Console.Write(verticalCoordinates++);
             }
         }
@@ -199,7 +151,7 @@ namespace Battleship
         private void WriteColumnIndex()
         {
             char horizontalCoordinates = 'A';
-            Console.SetCursorPosition(PLAYFIELD_LEFT, BattleFieldTop);
+            Console.SetCursorPosition(PLAYFIELD_LEFT, Top);
 
             for (int column = 0; column < _playField[0].Length; column++)
             {
