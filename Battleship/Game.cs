@@ -82,8 +82,7 @@ namespace Battleship
 
             var keyStroke = new ConsoleKeyInfo();
 
-            bool keepPlaying = true;
-            while (keepPlaying)
+            while (true)
             {
                 keyStroke = Console.ReadKey(true);
                 switch (keyStroke.Key)
@@ -152,11 +151,18 @@ namespace Battleship
                             break;
                         }
 
-                        //quit
-                        keepPlaying = PromptUser();
-                        // TODO: if user types Y to keep playing, show previous status bar
-                        _statusBar.Status = "";
-                        break;
+                        string previousStatus = _statusBar.Status;
+                        if (PromptUser())
+                        {
+                            //quit
+                            return;
+                        }
+                        else
+                        {
+                            //don't quit
+                            _statusBar.Status = previousStatus;
+                            break;
+                        }
                 }
             }
         }
@@ -203,19 +209,18 @@ namespace Battleship
 
             while (true)
             {
-                var answer = Console.ReadLine();
-
-                if (answer.Equals("y", StringComparison.OrdinalIgnoreCase))
+                switch (Console.ReadKey(true).Key)
                 {
-                    return false;
-                }
-                else if (answer.Equals("n", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-                else
-                {
-                    _statusBar.Status = "Invalid input. Are you sure you want to quit? (Y/N)   ";
+                    case ConsoleKey.Y:
+                    case ConsoleKey.Enter:
+                    case ConsoleKey.Spacebar:
+                        return true;
+                    case ConsoleKey.N:
+                    case ConsoleKey.Escape:
+                        return false;
+                    default:
+                        _statusBar.Status = "Invalid input. Are you sure you want to quit? (Y/N)   ";
+                        break;
                 }
             }
         }
