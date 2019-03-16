@@ -52,7 +52,7 @@ namespace Battleship
                 element.Redraw();
             }
         }
-
+        
         private void ResetView()
         {
             Console.CursorVisible = false;
