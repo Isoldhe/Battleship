@@ -17,6 +17,7 @@ namespace Battleship
         private readonly ShipTypeSelector _shipTypeSelector;
         private readonly StringBuilder _input = new StringBuilder();
         private bool _quit;
+        private Bot _bot;
 
         public Game()
         {
@@ -28,6 +29,8 @@ namespace Battleship
                 Left = 1,
                 Top = 1,
             };
+
+            _bot = new Bot();
 
             _statusBar = new StatusBar(50, 3)
             {
@@ -45,6 +48,7 @@ namespace Battleship
             _display.AddElement(_battleField);
             _display.AddElement(_statusBar);
             _display.AddElement(_shipTypeSelector);
+            _display.AddElement(_bot.BotBattleField);
         }
 
         public static bool WindowInvalidated { get; private set; }
