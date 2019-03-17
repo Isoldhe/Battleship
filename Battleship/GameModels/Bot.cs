@@ -75,14 +75,9 @@ namespace Battleship.GameModels
                     yLocation = random.Next(0, maxValue);
                 }
                 
+                // FIXME: ships overlap each other.
                 BotBattleField.AddShip(new Ship(shipType, xLocation, yLocation, orientation));
             }
-
-            BotBattleField.AddShip(new Ship(ShipType.Destroyer, 0, 0, Orientation.Horizontal));
-            BotBattleField.AddShip(new Ship(ShipType.AircraftCarrier, 9, 2, Orientation.Vertical));
-            BotBattleField.AddShip(new Ship(ShipType.Submarine, 5, 3, Orientation.Horizontal));
-            BotBattleField.AddShip(new Ship(ShipType.Cruiser, 3, 1, Orientation.Vertical));
-            BotBattleField.AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
         }
     }
 }
