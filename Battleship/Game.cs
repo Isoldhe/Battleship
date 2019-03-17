@@ -18,7 +18,7 @@ namespace Battleship
         private StatusBar _statusBar;
         private StringBuilder _input = new StringBuilder();
         private string _statusBeforeInput;
-        private bool _paused;
+        private bool _windowInvalidated;
         private bool _quit;
 
         public Game()
@@ -81,12 +81,12 @@ namespace Battleship
                         if (_display.CheckSize())
                         {
                             //window size is correct
-                            ResumeGame();
+                            RevalidateWindow();
                         }
                         else
                         {
                             //window was resized
-                            PauseGame();
+                            InvalidateWindow();
                         }
                         break;
                     default:
@@ -153,9 +153,9 @@ namespace Battleship
                     break;
                 case ConsoleKey.Enter:
                 case ConsoleKey.Spacebar:
-                    if (_paused)
+                    if (_windowInvalidated)
                     {
-                        ResumeGame();
+                        RevalidateWindow();
                         break;
                     }
 
@@ -193,21 +193,21 @@ namespace Battleship
             }
         }
 
-        private void PauseGame()
+        private void InvalidateWindow()
         {
-            if (!_paused)
+            if (!_windowInvalidated)
             {
-                _paused = true;
+                _windowInvalidated = true;
                 Console.SetCursorPosition(0, 0);
                 Console.Clear();
-                Console.Write("Game paused. Press enter to continue.");
+                Console.Write("Window size invalid. Press enter to auto-resize window.");
             }
         }
 
-        private void ResumeGame()
+        private void RevalidateWindow()
         {
             _display.RefreshDisplay();
-            _paused = false;
+            _windowInvalidated = false;
         }
 
         private void CancelInput()
