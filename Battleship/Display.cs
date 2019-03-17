@@ -37,7 +37,7 @@ namespace Battleship
             RefreshDisplay();
         }
 
-        private void RefreshDisplay()
+        public void RefreshDisplay()
         {
             Console.Clear();
             if (!_elements.Any()) return;

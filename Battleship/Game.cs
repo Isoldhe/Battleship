@@ -1,6 +1,7 @@
 using Battleship.DisplayElements;
 using Battleship.Enums;
 using Battleship.GameModels;
+using Battleship.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,7 @@ namespace Battleship
         private StatusBar _statusBar;
         private StringBuilder _input = new StringBuilder();
         private string _statusBeforeInput;
+        private bool _paused;
 
         public Game()
         {
@@ -53,6 +55,31 @@ namespace Battleship
 
         public void Run()
         {
+            //TODO use following snippet for input to include mouse and window resizing events
+            //foreach (var consoleInput in LowLevelConsoleFunctions.ReadConsoleInput())
+            //{
+            //    switch (consoleInput.EventType)
+            //    {
+            //        case InputEventType.FOCUS_EVENT:
+            //            bool gotFocus = consoleInput.FocusEvent.bSetFocus != 0;
+            //            break;
+            //        case InputEventType.KEY_EVENT:
+            //            var keyStroke = consoleInput.KeyEvent.ToConsoleKeyInfo();
+
+            //            break;
+            //        case InputEventType.MOUSE_EVENT:
+
+            //            //consoleInput.MouseEvent;
+            //            break;
+            //        case InputEventType.WINDOW_BUFFER_SIZE_EVENT:
+            //            //window was resized
+            //            PauseGame();
+            //            break;
+            //        default:
+            //            break;
+            //    }
+            //}
+
             var keyStroke = new ConsoleKeyInfo();
 
             bool keepPlaying = true;
@@ -132,6 +159,19 @@ namespace Battleship
                         break;
                 }
             }
+        }
+
+        private void PauseGame()
+        {
+            Console.SetCursorPosition(0, 0);
+            Console.WriteLine("Game paused. Press enter to continue.");
+            _paused = true;
+        }
+
+        private void ResumeGame()
+        {
+            _display.RefreshDisplay();
+            _paused = false;
         }
 
         private void CancelInput()

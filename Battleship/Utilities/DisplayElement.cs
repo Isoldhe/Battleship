@@ -16,15 +16,10 @@ namespace Battleship.Utilities
         protected void Clear()
         {
             string whitespace = string.Empty.PadRight(Width);
-            bool preventFinalCharacterWrite = Left + Width == Console.WindowWidth;
             for (int i = 0; i < Height; i++)
             {
                 Console.CursorLeft = Left;
                 Console.CursorTop = Top + i;
-
-                if (preventFinalCharacterWrite && Top + i + 1 == Console.WindowHeight)
-                    whitespace = whitespace.Remove(0, 1);
-
                 Console.Write(whitespace);
             }
         }
