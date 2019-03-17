@@ -17,6 +17,7 @@ namespace Battleship
         private StatusBar _statusBar;
         private StringBuilder _input = new StringBuilder();
         private string _statusBeforeInput;
+        private Bot _bot;
 
         public Game()
         {
@@ -29,6 +30,8 @@ namespace Battleship
                 Top = 1,
             };
 
+            _bot = new Bot();
+
             LoadTestData();
 
             _statusBar = new StatusBar(3, 50)
@@ -40,6 +43,8 @@ namespace Battleship
 
             _display.AddElement(_battleField);
             _display.AddElement(_statusBar);
+
+            _display.AddElement(_bot.BotBattleField);
         }
 
         private void LoadTestData()
