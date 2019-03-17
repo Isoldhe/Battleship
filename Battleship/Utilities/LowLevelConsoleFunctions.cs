@@ -207,9 +207,9 @@ namespace Battleship.Utilities
         public struct MOUSE_EVENT_RECORD
         {
             public COORD dwMousePosition;
-            public uint dwButtonState;
-            public uint dwControlKeyState;
-            public uint dwEventFlags;
+            public MouseButtonState dwButtonState;
+            public ControlKeyState dwControlKeyState;
+            public MouseEventFlags dwEventFlags;
         }
 
         public struct WINDOW_BUFFER_SIZE_RECORD
@@ -483,7 +483,7 @@ namespace Battleship.Utilities
     }
 
     [Flags]
-    public enum ControlKeyState
+    public enum ControlKeyState : uint
     {
         /// <summary>
         /// The right ALT key is pressed.
@@ -531,5 +531,65 @@ namespace Battleship.Utilities
         ENHANCED_KEY = 0x0100,
     }
 
+    [Flags]
+    public enum MouseButtonState : uint
+    {
+        ALL_RELEASED = 0,
 
+        /// <summary>
+        /// The leftmost mouse button.
+        /// </summary>
+        FROM_LEFT_1ST_BUTTON_PRESSED = 0x0001,
+
+        /// <summary>
+        /// The rightmost mouse button.
+        /// </summary>
+        RIGHTMOST_BUTTON_PRESSED = 0x0002,
+
+        /// <summary>
+        /// The second button from the left.
+        /// </summary>
+        FROM_LEFT_2ND_BUTTON_PRESSED = 0x0004,
+
+        /// <summary>
+        /// The third button from the left.
+        /// </summary>
+        FROM_LEFT_3RD_BUTTON_PRESSED = 0x0008,
+
+        /// <summary>
+        /// The fourth button from the left.
+        /// </summary>
+        FROM_LEFT_4TH_BUTTON_PRESSED = 0x0010,
+    }
+
+    [Flags]
+    public enum MouseEventFlags : uint
+    {
+        /// <summary>
+        /// A button was pressed or released.
+        /// </summary>
+        MOUSE_BUTTON_STATE_CHANGED = 0,
+
+        /// <summary>
+        /// A change in mouse position occurred.
+        /// </summary>
+        MOUSE_MOVED = 0x0001,
+
+        /// <summary>
+        /// The second click (button press) of a double-click occurred. The first click is returned as a regular button-press event.
+        /// </summary>
+        DOUBLE_CLICK = 0x0002,
+
+        /// <summary>
+        /// The vertical mouse wheel was moved.
+        /// If the high word of the dwButtonState member contains a positive value, the wheel was rotated forward, away from the user. Otherwise, the wheel was rotated backward, toward the user.    }
+        /// </summary>
+        MOUSE_WHEELED = 0x0004,
+
+        /// <summary>
+        /// The horizontal mouse wheel was moved.
+        /// If the high word of the dwButtonState member contains a positive value, the wheel was rotated to the right. Otherwise, the wheel was rotated to the left.
+        /// </summary>
+        MOUSE_HWHEELED = 0x0008,
+    }
 }

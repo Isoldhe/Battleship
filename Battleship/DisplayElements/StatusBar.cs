@@ -10,6 +10,7 @@ namespace Battleship.DisplayElements
     public class StatusBar : DisplayElement
     {
         private string _status;
+        private Dictionary<string, string> _savedStatusses = new Dictionary<string, string>();
 
         public StatusBar(int height, int width)
         {
@@ -22,9 +23,12 @@ namespace Battleship.DisplayElements
             get => _status;
             set
             {
-                Clear();
-                _status = value;
-                Redraw();
+                if (_status != value)
+                {
+                    Clear();
+                    _status = value;
+                    Redraw();
+                }
             }
         }
 
@@ -41,6 +45,29 @@ namespace Battleship.DisplayElements
                 Console.CursorTop = Top + i;
                 Console.Write(lines[i]);
             }
+        }
+
+        public void SaveStatus(string key)
+        {
+            _savedStatusses[key] = Status;
+        }
+
+        public void LoadStatus(string key)
+        {
+            if (_savedStatusses.ContainsKey(key))
+            {
+                Status = _savedStatusses[key];
+            }
+        }
+
+        public void DeleteStatus(string key)
+        {
+            _savedStatusses.Remove(key);
+        }
+
+        public bool StatusExists(string key)
+        {
+            return _savedStatusses.ContainsKey(key);
         }
     }
 }

@@ -12,7 +12,6 @@ namespace Battleship.DisplayElements
 {
     public class BattleField : DisplayElement
     {
-
         private static readonly int PLAYFIELD_LEFT = 2;
         private static readonly int PLAYFIELD_TOP = 1;
         private static readonly int PLAYFIELD_HORIZONTAL_SPACING = 2;
@@ -80,7 +79,7 @@ namespace Battleship.DisplayElements
                     }
                     else
                     {
-                        Console.Write('~');
+                        Console.Write(' ');
                     }
                 }
             }
@@ -123,6 +122,29 @@ namespace Battleship.DisplayElements
 
                 DrawSelectedPosition();
             }
+        }
+
+        public void SelectPosition(int row, int column)
+        {
+            if (row >= 0 && row < _playField.Length &&
+                column >= 0 && column < _playField[0].Length)
+            {
+                if (SelectedPosition != null)
+                {
+                    DeselectPosition();
+                }
+
+                SelectedPosition = _playField[row][column];
+
+                DrawSelectedPosition();
+            }
+        }
+
+        public void SelectPositionNear(short x, short y)
+        {
+            var column = CursorPositionToColumn(x);
+            var row = CursorPositionToRow(y);
+            SelectPosition(row, column);
         }
 
         public void DeselectPosition()
@@ -172,6 +194,24 @@ namespace Battleship.DisplayElements
                 + PLAYFIELD_HORIZONTAL_SPACING
                 + PLAYFIELD_LEFT
                 + Left;
+        }
+
+        private int CursorPositionToRow(int y)
+        {
+            return
+                (y
+                - PLAYFIELD_VERTICAL_SPACING
+                - PLAYFIELD_TOP
+                - Top) / (PLAYFIELD_VERTICAL_SPACING + 1);
+        }
+
+        private int CursorPositionToColumn(int x)
+        {
+            return
+                (x + 1
+                - PLAYFIELD_HORIZONTAL_SPACING
+                - PLAYFIELD_LEFT
+                - Left) / (PLAYFIELD_HORIZONTAL_SPACING + 1);
         }
 
         private void WriteRowIndex()

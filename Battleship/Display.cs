@@ -32,6 +32,13 @@ namespace Battleship
             element.DisplayElementChanged += DisplayElementChanged;
         }
 
+        public DisplayElement HitTest(short x, short y)
+        {
+            return _elements.FirstOrDefault(element =>
+            x >= element.Left && x < element.Left + element.Width
+            && y >= element.Top && y < element.Top + element.Height);
+        }
+
         private void DisplayElementChanged()
         {
             RefreshDisplay();

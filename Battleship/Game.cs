@@ -13,12 +13,11 @@ namespace Battleship
 {
     public class Game
     {
-        private BattleField _battleField;
-        private Display _display;
-        private StatusBar _statusBar;
-        private StringBuilder _input = new StringBuilder();
-        private string _statusBeforeInput;
-        private bool _windowInvalidated;
+        private readonly BattleField _battleField;
+        private readonly Display _display;
+        private readonly StatusBar _statusBar;
+        private readonly StatusBar _inputStatus;
+        private readonly StringBuilder _input = new StringBuilder();
         private bool _quit;
 
         public Game()
@@ -54,15 +53,16 @@ namespace Battleship
             _battleField.AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
         }
 
+        public static bool WindowInvalidated { get; private set; }
+
         public void Run()
         {
+            var previousMouseButtonState = MouseButtonState.ALL_RELEASED;
+
             foreach (var consoleInput in LowLevelConsoleFunctions.ReadConsoleInput())
             {
                 switch (consoleInput.EventType)
                 {
-                    case InputEventType.FOCUS_EVENT:
-                        bool gotFocus = consoleInput.FocusEvent.bSetFocus != 0;
-                        break;
                     case InputEventType.KEY_EVENT:
                         if (consoleInput.KeyEvent.bKeyDown)
                         {
@@ -74,8 +74,34 @@ namespace Battleship
 
                         break;
                     case InputEventType.MOUSE_EVENT:
+                        if (consoleInput.MouseEvent.dwEventFlags.HasFlag(MouseEventFlags.MOUSE_MOVED)
+                            && consoleInput.MouseEvent.dwButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
+                        {
+                            var elementHit = _display.HitTest(consoleInput.MouseEvent.dwMousePosition.X, consoleInput.MouseEvent.dwMousePosition.Y);
+                            if (elementHit == _battleField)
+                            {
+                                _battleField.SelectPositionNear(consoleInput.MouseEvent.dwMousePosition.X, consoleInput.MouseEvent.dwMousePosition.Y);
+                            }
+                        }
 
-                        //consoleInput.MouseEvent;
+                        if (consoleInput.MouseEvent.dwEventFlags.HasFlag(MouseEventFlags.MOUSE_BUTTON_STATE_CHANGED))
+                        {
+                            if (consoleInput.MouseEvent.dwButtonState == MouseButtonState.ALL_RELEASED 
+                                && previousMouseButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
+                            {
+                                //left button clicked
+                                var elementHit = _display.HitTest(consoleInput.MouseEvent.dwMousePosition.X, consoleInput.MouseEvent.dwMousePosition.Y);
+                                if (elementHit == _battleField)
+                                {
+                                    _battleField.SelectPositionNear(consoleInput.MouseEvent.dwMousePosition.X, consoleInput.MouseEvent.dwMousePosition.Y);
+                                    if (_battleField.SelectedPosition != null)
+                                    {
+                                        ConfirmSelectedPosition();
+                                    }
+                                }
+                            }
+                            previousMouseButtonState = consoleInput.MouseEvent.dwButtonState;
+                        }
                         break;
                     case InputEventType.WINDOW_BUFFER_SIZE_EVENT:
                         if (_display.CheckSize())
@@ -104,30 +130,77 @@ namespace Battleship
         {
             switch (keyStroke.Key)
             {
-                //TODO implement cursor
                 case ConsoleKey.LeftArrow:
                     if (_input.Length > 0)
                     {
                         CancelInput();
                     }
+
+                    if (_battleField.SelectedPosition == null)
+                    {
+                        _battleField.SelectPosition(0, 0);
+                    }
+                    else
+                    {
+                        _battleField.SelectPosition(
+                            _battleField.SelectedPosition.Row, 
+                            _battleField.SelectedPosition.Column - 1);
+                    }
+
                     break;
                 case ConsoleKey.UpArrow:
                     if (_input.Length > 0)
                     {
                         CancelInput();
                     }
+
+                    if (_battleField.SelectedPosition == null)
+                    {
+                        _battleField.SelectPosition(0, 0);
+                    }
+                    else
+                    {
+                        _battleField.SelectPosition(
+                            _battleField.SelectedPosition.Row - 1,
+                            _battleField.SelectedPosition.Column);
+                    }
+
                     break;
                 case ConsoleKey.RightArrow:
                     if (_input.Length > 0)
                     {
                         CancelInput();
                     }
+
+                    if (_battleField.SelectedPosition == null)
+                    {
+                        _battleField.SelectPosition(0, 0);
+                    }
+                    else
+                    {
+                        _battleField.SelectPosition(
+                            _battleField.SelectedPosition.Row,
+                            _battleField.SelectedPosition.Column + 1);
+                    }
+
                     break;
                 case ConsoleKey.DownArrow:
                     if (_input.Length > 0)
                     {
                         CancelInput();
                     }
+
+                    if (_battleField.SelectedPosition == null)
+                    {
+                        _battleField.SelectPosition(0, 0);
+                    }
+                    else
+                    {
+                        _battleField.SelectPosition(
+                            _battleField.SelectedPosition.Row + 1,
+                            _battleField.SelectedPosition.Column);
+                    }
+
                     break;
 
                 case ConsoleKey.Backspace:
@@ -153,14 +226,23 @@ namespace Battleship
                     break;
                 case ConsoleKey.Enter:
                 case ConsoleKey.Spacebar:
-                    if (_windowInvalidated)
+                    if (WindowInvalidated)
                     {
                         RevalidateWindow();
                         break;
                     }
 
-                    _battleField.SelectPosition(_input.ToString());
-                    CancelInput();
+                    if (_input.Length > 0)
+                    {
+                        _battleField.SelectPosition(_input.ToString());
+                        CancelInput();
+                    }
+
+                    if (_battleField.SelectedPosition != null)
+                    {
+                        ConfirmSelectedPosition();
+                        break;
+                    }
                     break;
 
 
@@ -177,27 +259,32 @@ namespace Battleship
                         break;
                     }
 
-                    string previousStatus = _statusBar.Status;
+                    _statusBar.SaveStatus("quit");
                     if (PromptUser())
                     {
                         //quit
                         _quit = true;
                         break;
                     }
-                    else
-                    {
-                        //don't quit
-                        _statusBar.Status = previousStatus;
-                        break;
-                    }
+
+                    //don't quit
+                    _statusBar.LoadStatus("quit");
+                    break;
             }
+        }
+
+        private void ConfirmSelectedPosition()
+        {
+            //TODO: do something with confirmed position
+            //_battleField.DeselectPosition();
+            _inputStatus.Status = "Position confirmed.";
         }
 
         private void InvalidateWindow()
         {
-            if (!_windowInvalidated)
+            if (!WindowInvalidated)
             {
-                _windowInvalidated = true;
+                WindowInvalidated = true;
                 Console.SetCursorPosition(0, 0);
                 Console.Clear();
                 Console.Write("Window size invalid. Press enter to auto-resize window.");
@@ -207,7 +294,7 @@ namespace Battleship
         private void RevalidateWindow()
         {
             _display.RefreshDisplay();
-            _windowInvalidated = false;
+            WindowInvalidated = false;
         }
 
         private void CancelInput()
@@ -220,18 +307,18 @@ namespace Battleship
         {
             if (_input.Length > 0)
             {
-                if (_statusBeforeInput == null)
+                if (!_statusBar.StatusExists("input"))
                 {
-                    _statusBeforeInput = _statusBar.Status;
+                    _statusBar.SaveStatus("input");
                 }
                 _statusBar.Status = $"Coordinate: {_input}";
             }
             else
             {
-                if (_statusBeforeInput != null)
+                if (_statusBar.StatusExists("input"))
                 {
-                    _statusBar.Status = _statusBeforeInput;
-                    _statusBeforeInput = null;
+                    _statusBar.LoadStatus("input");
+                    _statusBar.DeleteStatus("input");
                 }
             }
         }
