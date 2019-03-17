@@ -62,6 +62,7 @@ namespace Battleship.DisplayElements
         }
 
         public Dictionary<string, BoardPosition> BoardPositions { get; } = new Dictionary<string, BoardPosition>(StringComparer.OrdinalIgnoreCase);
+        public BoardPosition SelectedPosition { get; private set; }
 
         public override void Redraw()
         {
@@ -107,6 +108,45 @@ namespace Battleship.DisplayElements
             _ships.Add(ship);
 
             return true;
+        }
+
+        public void SelectPosition(string input)
+        {
+            if (BoardPositions.ContainsKey(input))
+            {
+                if (SelectedPosition != null)
+                {
+                    DeselectPosition();
+                }
+
+                SelectedPosition = BoardPositions[input];
+
+                DrawSelectedPosition();
+            }
+        }
+
+        public void DeselectPosition()
+        {
+            ClearSelectedPosition();
+            SelectedPosition = null;
+        }
+
+        private void ClearSelectedPosition()
+        {
+            SetCursorToRowColumn(SelectedPosition.Row, SelectedPosition.Column);
+            Console.CursorLeft--;
+            Console.Write(' ');
+            Console.CursorLeft++;
+            Console.Write(' ');
+        }
+
+        private void DrawSelectedPosition()
+        {
+            SetCursorToRowColumn(SelectedPosition.Row, SelectedPosition.Column);
+            Console.CursorLeft--;
+            Console.Write('>');
+            Console.CursorLeft++;
+            Console.Write('<');
         }
 
         private void SetCursorToRowColumn(int row, int column)

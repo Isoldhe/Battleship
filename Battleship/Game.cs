@@ -15,6 +15,8 @@ namespace Battleship
         private BattleField _battleField;
         private Display _display;
         private StatusBar _statusBar;
+        private StringBuilder _input = new StringBuilder();
+        private string _statusBeforeInput;
 
         public Game()
         {
@@ -33,7 +35,7 @@ namespace Battleship
             {
                 Left = 1,
                 Top = _battleField.Top + _battleField.Height + 1,
-                Status = "Press one of the arrow keys and be surprised by the result. If you dare, press Enter."
+                Status = "Welcome to Battleship. Start typing to enter a coordinate."
             };
 
             _display.AddElement(_battleField);
@@ -51,7 +53,7 @@ namespace Battleship
 
         public void Run()
         {
-            ConsoleKeyInfo keyStroke = new ConsoleKeyInfo();
+            var keyStroke = new ConsoleKeyInfo();
 
             bool keepPlaying = true;
             while (keepPlaying)
@@ -60,41 +62,98 @@ namespace Battleship
                 switch (keyStroke.Key)
                 {
                     //TODO implement cursor
-                    //currently this feature shifts the field.. not very helpful but maybe funny
                     case ConsoleKey.LeftArrow:
-                        _battleField.Left--;
+                        if (_input.Length > 0)
+                        {
+                            CancelInput();
+                        }
                         break;
                     case ConsoleKey.UpArrow:
-                        _battleField.Top--;
+                        if (_input.Length > 0)
+                        {
+                            CancelInput();
+                        }
                         break;
                     case ConsoleKey.RightArrow:
-                        _battleField.Left++;
+                        if (_input.Length > 0)
+                        {
+                            CancelInput();
+                        }
                         break;
                     case ConsoleKey.DownArrow:
-                        _battleField.Top++;
+                        if (_input.Length > 0)
+                        {
+                            CancelInput();
+                        }
                         break;
 
-
+                    case ConsoleKey.Backspace:
+                        _input.Remove(_input.Length - 1, 1);
+                        InputChanged();
+                        break;
+                    default:
+                        if (char.IsLetterOrDigit(keyStroke.KeyChar))
+                        {
+                            if (_input.Length < 20)
+                            {
+                                _input.Append(keyStroke.KeyChar);
+                                InputChanged();
+                            }
+                        }
+                        else
+                        {
+                            //do nothing
+                        }
+                        break;
                     case ConsoleKey.Enter:
                     case ConsoleKey.Spacebar:
-                        //TODO accept input
-                        _statusBar.Status = "OMG YOU PRESSED THE WRONG BUTTON NOW EVERYTHING WILL EXPLODE .. " +
-                            "3 .. 2 .. 1 .... .. . ... .. ............................";
-                        Thread.Sleep(2500);
-                        _statusBar.Status = "BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM!!!!";
-                        Thread.Sleep(700);
+                        _battleField.SelectPosition(_input.ToString());
+                        CancelInput();
                         break;
+
+
                     case ConsoleKey.Escape:
+                        if (_input.Length > 0)
+                        {
+                            CancelInput();
+                            break;
+                        }
+
+                        if (_battleField.SelectedPosition != null)
+                        {
+                            _battleField.DeselectPosition();
+                            break;
+                        }
+
                         //quit
                         keepPlaying = PromptUser();
                         // TODO: if user types Y to keep playing, show previous status bar
                         _statusBar.Status = "";
                         break;
-                    default:
-                        string key = keyStroke.KeyChar.ToString();
-                        //do nothing
-                        break;
                 }
+            }
+        }
+
+        private void CancelInput()
+        {
+            _input.Clear();
+            InputChanged();
+        }
+
+        private void InputChanged()
+        {
+            if (_input.Length > 0)
+            {
+                if (_statusBeforeInput == null)
+                {
+                    _statusBeforeInput = _statusBar.Status;
+                }
+                _statusBar.Status = $"Coordinate: {_input}";
+            }
+            else
+            {
+                _statusBar.Status = _statusBeforeInput;
+                _statusBeforeInput = null;
             }
         }
 
