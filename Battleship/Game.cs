@@ -19,6 +19,7 @@ namespace Battleship
         private StringBuilder _input = new StringBuilder();
         private string _statusBeforeInput;
         private bool _paused;
+        private bool _quit;
 
         public Game()
         {
@@ -55,123 +56,152 @@ namespace Battleship
 
         public void Run()
         {
-            //TODO use following snippet for input to include mouse and window resizing events
-            //foreach (var consoleInput in LowLevelConsoleFunctions.ReadConsoleInput())
-            //{
-            //    switch (consoleInput.EventType)
-            //    {
-            //        case InputEventType.FOCUS_EVENT:
-            //            bool gotFocus = consoleInput.FocusEvent.bSetFocus != 0;
-            //            break;
-            //        case InputEventType.KEY_EVENT:
-            //            var keyStroke = consoleInput.KeyEvent.ToConsoleKeyInfo();
-
-            //            break;
-            //        case InputEventType.MOUSE_EVENT:
-
-            //            //consoleInput.MouseEvent;
-            //            break;
-            //        case InputEventType.WINDOW_BUFFER_SIZE_EVENT:
-            //            //window was resized
-            //            PauseGame();
-            //            break;
-            //        default:
-            //            break;
-            //    }
-            //}
-
-            var keyStroke = new ConsoleKeyInfo();
-
-            while (true)
+            foreach (var consoleInput in LowLevelConsoleFunctions.ReadConsoleInput())
             {
-                keyStroke = Console.ReadKey(true);
-                switch (keyStroke.Key)
+                switch (consoleInput.EventType)
                 {
-                    //TODO implement cursor
-                    case ConsoleKey.LeftArrow:
-                        if (_input.Length > 0)
-                        {
-                            CancelInput();
-                        }
+                    case InputEventType.FOCUS_EVENT:
+                        bool gotFocus = consoleInput.FocusEvent.bSetFocus != 0;
                         break;
-                    case ConsoleKey.UpArrow:
-                        if (_input.Length > 0)
+                    case InputEventType.KEY_EVENT:
+                        if (consoleInput.KeyEvent.bKeyDown)
                         {
-                            CancelInput();
-                        }
-                        break;
-                    case ConsoleKey.RightArrow:
-                        if (_input.Length > 0)
-                        {
-                            CancelInput();
-                        }
-                        break;
-                    case ConsoleKey.DownArrow:
-                        if (_input.Length > 0)
-                        {
-                            CancelInput();
-                        }
-                        break;
-
-                    case ConsoleKey.Backspace:
-                        _input.Remove(_input.Length - 1, 1);
-                        InputChanged();
-                        break;
-                    default:
-                        if (char.IsLetterOrDigit(keyStroke.KeyChar))
-                        {
-                            if (_input.Length < 20)
+                            for (int i = 0; i < consoleInput.KeyEvent.wRepeatCount; i++)
                             {
-                                _input.Append(keyStroke.KeyChar);
-                                InputChanged();
+                                HandleKeyEvent(consoleInput.KeyEvent.ToConsoleKeyInfo());
                             }
                         }
+
+                        break;
+                    case InputEventType.MOUSE_EVENT:
+
+                        //consoleInput.MouseEvent;
+                        break;
+                    case InputEventType.WINDOW_BUFFER_SIZE_EVENT:
+                        if (_display.CheckSize())
+                        {
+                            //window size is correct
+                            ResumeGame();
+                        }
                         else
                         {
-                            //do nothing
+                            //window was resized
+                            PauseGame();
                         }
                         break;
-                    case ConsoleKey.Enter:
-                    case ConsoleKey.Spacebar:
-                        _battleField.SelectPosition(_input.ToString());
+                    default:
+                        break;
+                }
+
+                if (_quit)
+                {
+                    break;
+                }
+            }
+        }
+
+        private void HandleKeyEvent(ConsoleKeyInfo keyStroke)
+        {
+            switch (keyStroke.Key)
+            {
+                //TODO implement cursor
+                case ConsoleKey.LeftArrow:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                    }
+                    break;
+                case ConsoleKey.UpArrow:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                    }
+                    break;
+                case ConsoleKey.RightArrow:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                    }
+                    break;
+                case ConsoleKey.DownArrow:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                    }
+                    break;
+
+                case ConsoleKey.Backspace:
+                    if (_input.Length > 0)
+                    {
+                        _input.Remove(_input.Length - 1, 1);
+                        InputChanged();
+                    }
+                    break;
+                default:
+                    if (char.IsLetterOrDigit(keyStroke.KeyChar))
+                    {
+                        if (_input.Length < 20)
+                        {
+                            _input.Append(keyStroke.KeyChar);
+                            InputChanged();
+                        }
+                    }
+                    else
+                    {
+                        //do nothing
+                    }
+                    break;
+                case ConsoleKey.Enter:
+                case ConsoleKey.Spacebar:
+                    if (_paused)
+                    {
+                        ResumeGame();
+                        break;
+                    }
+
+                    _battleField.SelectPosition(_input.ToString());
+                    CancelInput();
+                    break;
+
+
+                case ConsoleKey.Escape:
+                    if (_input.Length > 0)
+                    {
                         CancelInput();
                         break;
+                    }
 
+                    if (_battleField.SelectedPosition != null)
+                    {
+                        _battleField.DeselectPosition();
+                        break;
+                    }
 
-                    case ConsoleKey.Escape:
-                        if (_input.Length > 0)
-                        {
-                            CancelInput();
-                            break;
-                        }
-
-                        if (_battleField.SelectedPosition != null)
-                        {
-                            _battleField.DeselectPosition();
-                            break;
-                        }
-
-                        string previousStatus = _statusBar.Status;
-                        if (PromptUser())
-                        {
-                            //quit
-                            return;
-                        }
-                        else
-                        {
-                            //don't quit
-                            _statusBar.Status = previousStatus;
-                            break;
-                        }
-                }
+                    string previousStatus = _statusBar.Status;
+                    if (PromptUser())
+                    {
+                        //quit
+                        _quit = true;
+                        break;
+                    }
+                    else
+                    {
+                        //don't quit
+                        _statusBar.Status = previousStatus;
+                        break;
+                    }
             }
         }
 
         private void PauseGame()
         {
-            Console.SetCursorPosition(0, 0);
-            Console.WriteLine("Game paused. Press enter to continue.");
-            _paused = true;
+            if (!_paused)
+            {
+                _paused = true;
+                Console.SetCursorPosition(0, 0);
+                Console.Clear();
+                Console.Write("Game paused. Press enter to continue.");
+            }
         }
 
         private void ResumeGame()
@@ -198,8 +228,11 @@ namespace Battleship
             }
             else
             {
-                _statusBar.Status = _statusBeforeInput;
-                _statusBeforeInput = null;
+                if (_statusBeforeInput != null)
+                {
+                    _statusBar.Status = _statusBeforeInput;
+                    _statusBeforeInput = null;
+                }
             }
         }
 
