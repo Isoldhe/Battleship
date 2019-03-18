@@ -53,6 +53,8 @@ namespace Battleship.DisplayElements
             {
                 Ship_Damaged(ship);
             }
+
+            Redraw();
         }
 
         public ShipType? SelectedShipType
@@ -60,16 +62,19 @@ namespace Battleship.DisplayElements
             get => _selectedShipType;
             private set
             {
-                UnHighlightSelectedType();
-                if (_shipsOnBattlefield.Any(ship => ship.ShipType == value))
+                if (_selectedShipType != value)
                 {
-                    _selectedShipType = null;
+                    UnHighlightSelectedType();
+                    if (_shipsOnBattlefield.Any(ship => ship.ShipType == value))
+                    {
+                        _selectedShipType = null;
+                    }
+                    else
+                    {
+                        _selectedShipType = value;
+                    }
+                    HighlightSelectedType();
                 }
-                else
-                {
-                    _selectedShipType = value;
-                }
-                HighlightSelectedType();
             }
         }
 
@@ -90,6 +95,11 @@ namespace Battleship.DisplayElements
             {
                 SelectedShipType = types.First();
             }
+        }
+
+        public void DeselectShipType()
+        {
+            SelectedShipType = null;
         }
 
         private void FillBuffer()
@@ -135,6 +145,8 @@ namespace Battleship.DisplayElements
                     Buffer[row][column].Attributes |= CharAttributes.FOREGROUND_RED;
                 }
             }
+
+            Redraw();
         }
 
         private void UnHighlightSelectedType()
@@ -144,6 +156,8 @@ namespace Battleship.DisplayElements
 
             for (int column = 0; column < Width; column++)
                 Buffer[(int)SelectedShipType][column].Attributes &= ~CharAttributes.FOREGROUND_INTENSITY;
+
+            Redraw();
         }
 
         private void HighlightSelectedType()
@@ -153,6 +167,8 @@ namespace Battleship.DisplayElements
 
             for (int column = 0; column < Width; column++)
                 Buffer[(int)SelectedShipType][column].Attributes |= CharAttributes.FOREGROUND_INTENSITY;
+
+            Redraw();
         }
 
         public void Dispose()

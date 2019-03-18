@@ -108,10 +108,15 @@ namespace Battleship
             if (eventFlags.HasFlag(MouseEventFlags.MOUSE_MOVED)
                 && currentButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
             {
+                //left button mouse drag
                 var elementHit = _display.HitTest(mousePosition.X, mousePosition.Y);
                 if (elementHit == _battleField)
                 {
                     _battleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
+                }
+                else if (elementHit == _shipTypeSelector)
+                {
+                    _shipTypeSelector.SelectShipType(mousePosition.X, mousePosition.Y);
                 }
             }
 
@@ -128,6 +133,14 @@ namespace Battleship
                         if (_battleField.SelectedPosition != null)
                         {
                             ConfirmSelectedPosition();
+                        }
+                    }
+                    else if (elementHit == _shipTypeSelector)
+                    {
+                        _shipTypeSelector.SelectShipType(mousePosition.X, mousePosition.Y);
+                        if (_shipTypeSelector.SelectedShipType != null)
+                        {
+                            ConfirmSelectedShipType();
                         }
                     }
                 }
@@ -251,7 +264,11 @@ namespace Battleship
                         }
                         else
                         {
-                            _battleField.SelectPosition(_input.ToString());
+                            _battleField.SelectPosition(inputString);
+                            if (_battleField.SelectedPosition == null)
+                            {
+                                _shipTypeSelector.SelectShipType(inputString);
+                            }
                         }
                         CancelInput();
                     }
@@ -277,6 +294,12 @@ namespace Battleship
                         break;
                     }
 
+                    if (_shipTypeSelector.SelectedShipType != null)
+                    {
+                        _shipTypeSelector.DeselectShipType();
+                        break;
+                    }
+
                     _statusBar.SaveStatus("quit");
                     if (PromptUser())
                     {
@@ -295,6 +318,12 @@ namespace Battleship
         {
             //TODO: do something with confirmed position
             //_battleField.DeselectPosition();
+        }
+
+        private void ConfirmSelectedShipType()
+        {
+            //TODO: do something with confirmed shiptype
+            //_shipTypeSelector.DeselectShipType()
         }
 
         private void InvalidateWindow()
