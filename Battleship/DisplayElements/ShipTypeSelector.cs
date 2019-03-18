@@ -36,6 +36,7 @@ namespace Battleship.DisplayElements
                     if (column < shipString.Length)
                     {
                         Buffer[row][column].Character = column < shipString.Length ? shipString[column] : ' ';
+                        Buffer[row][column].Attributes &= ~CharAttributes.FOREGROUND_INTENSITY;
                     }
                 }
             }

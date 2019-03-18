@@ -71,6 +71,14 @@ namespace Battleship.DisplayElements
                     Buffer[row][column].Character = char.IsLetter(spot) ? spot : ' ';
                 }
             }
+
+            for (int row = PLAYFIELD_TOP; row < Height; row++)
+            {
+                for (int column = PLAYFIELD_LEFT; column < Width; column++)
+                {
+                    Buffer[row][column].Attributes = CharAttributes.BACKGROUND_BLUE | CharAttributes.FOREGROUND_WHITE | CharAttributes.FOREGROUND_INTENSITY;
+                }
+            }
         }
 
         public Dictionary<string, BoardPosition> BoardPositions { get; } = new Dictionary<string, BoardPosition>(StringComparer.OrdinalIgnoreCase);
@@ -202,7 +210,7 @@ namespace Battleship.DisplayElements
 
             for (int row = 0; row < _playField.Length; row++)
             {
-                var coords = verticalCoordinates++.ToString();
+                var coords = verticalCoordinates++.ToString().PadLeft(2);
                 for (int column = 0; column < coords.Length; column++)
                 {
                     Buffer[RowToBufferPosition(row)][column].Character = coords[column];
