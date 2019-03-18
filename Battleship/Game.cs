@@ -36,7 +36,7 @@ namespace Battleship
                 Status = "Welcome to Battleship. Start by placing your own ships."
             };
 
-            _shipTypeSelector = new ShipTypeSelector(30, 20)
+            _shipTypeSelector = new ShipTypeSelector(30, 20, _battleField.Ships)
             {
                 Left = _battleField.Left + _battleField.Width + 1,
                 Top = 3,

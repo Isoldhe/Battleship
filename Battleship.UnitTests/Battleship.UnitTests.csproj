@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="TestExtensionMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestRandomThings.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

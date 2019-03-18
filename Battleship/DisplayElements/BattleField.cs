@@ -3,6 +3,7 @@ using Battleship.GameModels;
 using Battleship.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Battleship.DisplayElements
 {
-    public class BattleField : DisplayElement
+    public class BattleField : DisplayElement, IDisposable
     {
         private static readonly int PLAYFIELD_LEFT = 2;
         private static readonly int PLAYFIELD_TOP = 1;
@@ -26,7 +27,6 @@ namespace Battleship.DisplayElements
         private static readonly int DEFAULT_HEIGHT = 10;
 
         private readonly BoardPosition[][] _playField;
-        private readonly List<Ship> _ships = new List<Ship>();
 
         public BattleField() : this(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         { }
@@ -61,32 +61,42 @@ namespace Battleship.DisplayElements
         {
             WriteRowIndex();
             WriteColumnIndex();
-            for (int x = 0; x < _playField[0].Length; x++) //colIndex
-            {
-                for (int y = 0; y < _playField.Length; y++) //rowIndex
-                {
-                    char spot = _playField[y][x].Value;
-                    var row = RowToBufferPosition(y);
-                    var column = ColumnToBufferPosition(x);
-                    Buffer[row][column].Character = char.IsLetter(spot) ? spot : ' ';
-                }
-            }
+            WritePlayField();
+            UpdatePlayFieldChars();
+        }
 
+        private void WritePlayField()
+        {
             for (int row = PLAYFIELD_TOP; row < Height; row++)
             {
                 for (int column = PLAYFIELD_LEFT; column < Width; column++)
                 {
+                    Buffer[row][column].Character = ' ';
                     Buffer[row][column].Attributes = CharAttributes.BACKGROUND_BLUE | CharAttributes.FOREGROUND_WHITE | CharAttributes.FOREGROUND_INTENSITY;
+                }
+            }
+        }
+
+        private void UpdatePlayFieldChars()
+        {
+            for (int x = 0; x < _playField[0].Length; x++) //colIndex
+            {
+                for (int y = 0; y < _playField.Length; y++) //rowIndex
+                {
+                    var row = RowToBufferPosition(y);
+                    var column = ColumnToBufferPosition(x);
+                    Buffer[row][column].Character = _playField[y][x].Value;
                 }
             }
         }
 
         public Dictionary<string, BoardPosition> BoardPositions { get; } = new Dictionary<string, BoardPosition>(StringComparer.OrdinalIgnoreCase);
         public BoardPosition SelectedPosition { get; private set; }
+        public ObservableCollection<Ship> Ships { get; } = new ObservableCollection<Ship>();
 
         public bool AddShip(Ship ship)
         {
-            if (_ships.Any(s => s.ShipType == ship.ShipType))
+            if (Ships.Any(s => s.ShipType == ship.ShipType))
             {
                 //cannot add another ship of the same type
                 return false;
@@ -103,7 +113,9 @@ namespace Battleship.DisplayElements
                     _playField[ship.YLocation + i][ship.XLocation].Value = ship.Name[0];
                 }
             }
-            _ships.Add(ship);
+            Ships.Add(ship);
+
+            UpdatePlayFieldChars();
 
             return true;
         }
@@ -226,6 +238,11 @@ namespace Battleship.DisplayElements
             {
                 Buffer[0][ColumnToBufferPosition(column)].Character = horizontalCoordinates++;
             }
+        }
+
+        public void Dispose()
+        {
+            Ships.Clear();
         }
     }
 }

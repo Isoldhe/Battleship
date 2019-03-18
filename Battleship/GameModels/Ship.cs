@@ -7,14 +7,13 @@ using System.Threading.Tasks;
 
 namespace Battleship.GameModels
 {
+    public delegate void DamagedEvent(Ship sender);
+
     public class Ship
     {
-        public string Name { get; }
-        public ShipType ShipType { get; }
-        public int Size { get; set; }
-        public int XLocation { get; set; }
-        public int YLocation { get; set; }
-        public Orientation Orientation { get; set; } // horizontal (H) or vertical (V)
+        public event DamagedEvent Damaged;
+
+        private int _health;
 
         public Ship(ShipType shipType, int xLocation, int yLocation, Orientation orientation)
         {
@@ -41,6 +40,29 @@ namespace Battleship.GameModels
             XLocation = xLocation;
             YLocation = yLocation;
             Orientation = orientation;
+            _health = Size;
+        }
+
+        public string Name { get; }
+        public ShipType ShipType { get; }
+        public int Size { get; set; }
+        public int XLocation { get; set; }
+        public int YLocation { get; set; }
+        public Orientation Orientation { get; set; } // horizontal (H) or vertical (V)
+
+        public int Health
+        {
+            get => _health;
+            set
+            {
+                _health = value;
+                Damaged?.Invoke(this);
+            }
+        }
+
+        public override string ToString()
+        {
+            return $"[{Name[0]}] {Name} Size: {Size}";
         }
     }
 }
