@@ -14,9 +14,9 @@ namespace Battleship.GameModels
         public int Size { get; set; }
         public int XLocation { get; set; }
         public int YLocation { get; set; }
-        public Orientation Position { get; set; } // horizontal (H) or vertical (V)
+        public Orientation Orientation { get; set; } // horizontal (H) or vertical (V)
 
-        public Ship(ShipType shipType, int xLocation, int yLocation, Orientation position)
+        public Ship(ShipType shipType, int xLocation, int yLocation, Orientation orientation)
         {
             Name = shipType.ToString();
             ShipType = shipType;
@@ -40,7 +40,7 @@ namespace Battleship.GameModels
             }
             XLocation = xLocation;
             YLocation = yLocation;
-            Position = position;
+            Orientation = orientation;
         }
     }
 }

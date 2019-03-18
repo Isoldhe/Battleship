@@ -1,6 +1,4 @@
 using Battleship.DisplayElements;
-using Battleship.Enums;
-using Battleship.GameModels;
 using Battleship.Utilities;
 using System;
 using System.Collections.Generic;
@@ -16,7 +14,7 @@ namespace Battleship
         private readonly BattleField _battleField;
         private readonly Display _display;
         private readonly StatusBar _statusBar;
-        private readonly StatusBar _inputStatus;
+        private readonly ShipTypeSelector _shipTypeSelector;
         private readonly StringBuilder _input = new StringBuilder();
         private bool _quit;
 
@@ -31,26 +29,22 @@ namespace Battleship
                 Top = 1,
             };
 
-            LoadTestData();
-
-            _statusBar = new StatusBar(3, 50)
+            _statusBar = new StatusBar(50, 3)
             {
                 Left = 1,
                 Top = _battleField.Top + _battleField.Height + 1,
-                Status = "Welcome to Battleship. Start typing to enter a coordinate."
+                Status = "Welcome to Battleship. Start by placing your own ships."
+            };
+
+            _shipTypeSelector = new ShipTypeSelector(30, 20)
+            {
+                Left = _battleField.Left + _battleField.Width + 1,
+                Top = 3,
             };
 
             _display.AddElement(_battleField);
             _display.AddElement(_statusBar);
-        }
-
-        private void LoadTestData()
-        {
-            _battleField.AddShip(new Ship(ShipType.Destroyer, 0, 0, Orientation.Horizontal));
-            _battleField.AddShip(new Ship(ShipType.AircraftCarrier, 9, 2, Orientation.Vertical));
-            _battleField.AddShip(new Ship(ShipType.Submarine, 5, 3, Orientation.Horizontal));
-            _battleField.AddShip(new Ship(ShipType.Cruiser, 3, 1, Orientation.Vertical));
-            _battleField.AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
+            _display.AddElement(_shipTypeSelector);
         }
 
         public static bool WindowInvalidated { get; private set; }
@@ -64,9 +58,9 @@ namespace Battleship
                 switch (consoleInput.EventType)
                 {
                     case InputEventType.KEY_EVENT:
-                        if (consoleInput.KeyEvent.bKeyDown)
+                        if (consoleInput.KeyEvent.KeyDown)
                         {
-                            for (int i = 0; i < consoleInput.KeyEvent.wRepeatCount; i++)
+                            for (int i = 0; i < consoleInput.KeyEvent.RepeatCount; i++)
                             {
                                 HandleKeyEvent(consoleInput.KeyEvent.ToConsoleKeyInfo());
                             }
@@ -74,34 +68,13 @@ namespace Battleship
 
                         break;
                     case InputEventType.MOUSE_EVENT:
-                        if (consoleInput.MouseEvent.dwEventFlags.HasFlag(MouseEventFlags.MOUSE_MOVED)
-                            && consoleInput.MouseEvent.dwButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
-                        {
-                            var elementHit = _display.HitTest(consoleInput.MouseEvent.dwMousePosition.X, consoleInput.MouseEvent.dwMousePosition.Y);
-                            if (elementHit == _battleField)
-                            {
-                                _battleField.SelectPositionNear(consoleInput.MouseEvent.dwMousePosition.X, consoleInput.MouseEvent.dwMousePosition.Y);
-                            }
-                        }
+                        HandleMouseEvent(
+                            previousMouseButtonState, 
+                            consoleInput.MouseEvent.EventFlags,
+                            consoleInput.MouseEvent.ButtonState,
+                            consoleInput.MouseEvent.MousePosition);
 
-                        if (consoleInput.MouseEvent.dwEventFlags.HasFlag(MouseEventFlags.MOUSE_BUTTON_STATE_CHANGED))
-                        {
-                            if (consoleInput.MouseEvent.dwButtonState == MouseButtonState.ALL_RELEASED 
-                                && previousMouseButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
-                            {
-                                //left button clicked
-                                var elementHit = _display.HitTest(consoleInput.MouseEvent.dwMousePosition.X, consoleInput.MouseEvent.dwMousePosition.Y);
-                                if (elementHit == _battleField)
-                                {
-                                    _battleField.SelectPositionNear(consoleInput.MouseEvent.dwMousePosition.X, consoleInput.MouseEvent.dwMousePosition.Y);
-                                    if (_battleField.SelectedPosition != null)
-                                    {
-                                        ConfirmSelectedPosition();
-                                    }
-                                }
-                            }
-                            previousMouseButtonState = consoleInput.MouseEvent.dwButtonState;
-                        }
+                        previousMouseButtonState = consoleInput.MouseEvent.ButtonState;
                         break;
                     case InputEventType.WINDOW_BUFFER_SIZE_EVENT:
                         if (_display.CheckSize())
@@ -122,6 +95,41 @@ namespace Battleship
                 if (_quit)
                 {
                     break;
+                }
+            }
+        }
+
+        private void HandleMouseEvent(
+            MouseButtonState previousMouseButtonState, 
+            MouseEventFlags eventFlags,
+            MouseButtonState currentButtonState,
+            COORD mousePosition)
+        {
+            if (eventFlags.HasFlag(MouseEventFlags.MOUSE_MOVED)
+                && currentButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
+            {
+                var elementHit = _display.HitTest(mousePosition.X, mousePosition.Y);
+                if (elementHit == _battleField)
+                {
+                    _battleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
+                }
+            }
+
+            if (eventFlags.HasFlag(MouseEventFlags.MOUSE_BUTTON_STATE_CHANGED))
+            {
+                if (currentButtonState == MouseButtonState.ALL_RELEASED
+                    && previousMouseButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
+                {
+                    //left button clicked
+                    var elementHit = _display.HitTest(mousePosition.X, mousePosition.Y);
+                    if (elementHit == _battleField)
+                    {
+                        _battleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
+                        if (_battleField.SelectedPosition != null)
+                        {
+                            ConfirmSelectedPosition();
+                        }
+                    }
                 }
             }
         }
@@ -234,7 +242,17 @@ namespace Battleship
 
                     if (_input.Length > 0)
                     {
-                        _battleField.SelectPosition(_input.ToString());
+                        var inputString = _input.ToString();
+                        if (inputString.Equals("QUIT", StringComparison.OrdinalIgnoreCase) ||
+                            inputString.Equals("EXIT", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _quit = true;
+                            break;
+                        }
+                        else
+                        {
+                            _battleField.SelectPosition(_input.ToString());
+                        }
                         CancelInput();
                     }
 
@@ -277,7 +295,6 @@ namespace Battleship
         {
             //TODO: do something with confirmed position
             //_battleField.DeselectPosition();
-            _inputStatus.Status = "Position confirmed.";
         }
 
         private void InvalidateWindow()

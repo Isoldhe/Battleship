@@ -9,6 +9,8 @@ namespace Battleship.Utilities
 {
     public static class LowLevelConsoleFunctions
     {
+        #region Handles
+
         /// <summary>
         /// Provides access to the console window handle.
         /// </summary>
@@ -22,11 +24,7 @@ namespace Battleship.Utilities
         public static extern IntPtr GetStdHandle(
             IOHandles nStdHandle);
 
-        public enum IOHandles : int
-        {
-            STD_INPUT_HANDLE = -10,
-            STD_OUTPUT_HANDLE = -11,
-        }
+        #endregion
 
         #region ConsoleModes
 
@@ -137,216 +135,190 @@ namespace Battleship.Utilities
         }
 
         #endregion
+    }
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct COORD
+    public enum IOHandles : int
+    {
+        STD_INPUT_HANDLE = -10,
+        STD_OUTPUT_HANDLE = -11,
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct COORD
+    {
+        public short X;
+        public short Y;
+    }
+
+    public struct SMALL_RECT
+    {
+        public short Left;
+        public short Top;
+        public short Right;
+        public short Bottom;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct INPUT_RECORD
+    {
+        [FieldOffset(0)]
+        public InputEventType EventType;
+        [FieldOffset(4)]
+        public KEY_EVENT_RECORD KeyEvent;
+        [FieldOffset(4)]
+        public MOUSE_EVENT_RECORD MouseEvent;
+        //[FieldOffset(4)]
+        //public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
+        //[FieldOffset(4)]
+        //public MENU_EVENT_RECORD MenuEvent;
+        //[FieldOffset(4)]
+        //public FOCUS_EVENT_RECORD FocusEvent;
+    };
+
+    [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
+    public struct KEY_EVENT_RECORD
+    {
+        [FieldOffset(0), MarshalAs(UnmanagedType.Bool)]
+        public bool KeyDown;
+        [FieldOffset(4), MarshalAs(UnmanagedType.U2)]
+        public ushort RepeatCount;
+        [FieldOffset(6), MarshalAs(UnmanagedType.U2)]
+        public ushort VirtualKeyCode;
+        [FieldOffset(8), MarshalAs(UnmanagedType.U2)]
+        public ushort VirtualScanCode;
+        [FieldOffset(10)]
+        public char UnicodeChar;
+        [FieldOffset(12), MarshalAs(UnmanagedType.U4)]
+        public ControlKeyState controlKeyState;
+
+        public ConsoleKeyInfo ToConsoleKeyInfo()
         {
-
-            public short X;
-            public short Y;
-
+            return new ConsoleKeyInfo(
+                UnicodeChar,
+                (ConsoleKey)VirtualKeyCode,
+                controlKeyState.HasFlag(ControlKeyState.SHIFT_PRESSED),
+                controlKeyState.HasFlag(ControlKeyState.LEFT_ALT_PRESSED)
+                || controlKeyState.HasFlag(ControlKeyState.RIGHT_ALT_PRESSED),
+                controlKeyState.HasFlag(ControlKeyState.LEFT_CTRL_PRESSED)
+                || controlKeyState.HasFlag(ControlKeyState.RIGHT_CTRL_PRESSED));
         }
+    }
 
-        public struct SMALL_RECT
-        {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MOUSE_EVENT_RECORD
+    {
+        public COORD MousePosition;
+        public MouseButtonState ButtonState;
+        public ControlKeyState ControlKeyState;
+        public MouseEventFlags EventFlags;
+    }
 
-            public short Left;
-            public short Top;
-            public short Right;
-            public short Bottom;
+    //CHAR_INFO struct, which was a union in the old days
+    // so we want to use LayoutKind.Explicit to mimic it as closely
+    // as we can
+    [StructLayout(LayoutKind.Explicit)]
+    public struct CHAR_INFO
+    {
+        [FieldOffset(0)]
+        public char Character;
+        [FieldOffset(2)] //2 bytes seems to work properly
+        public CharAttributes Attributes;
+    }
 
-        }
+    // Enumerated type for the control messages sent to the handler routine
+    enum CtrlTypes : uint
+    {
+        CTRL_C_EVENT = 0,
+        CTRL_BREAK_EVENT,
+        CTRL_CLOSE_EVENT,
+        CTRL_LOGOFF_EVENT = 5,
+        CTRL_SHUTDOWN_EVENT
+    }
 
-        [StructLayout(LayoutKind.Explicit)]
-        public struct INPUT_RECORD
-        {
-            [FieldOffset(0)]
-            public InputEventType EventType;
-            [FieldOffset(4)]
-            public KEY_EVENT_RECORD KeyEvent;
-            [FieldOffset(4)]
-            public MOUSE_EVENT_RECORD MouseEvent;
-            [FieldOffset(4)]
-            public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
-            [FieldOffset(4)]
-            public MENU_EVENT_RECORD MenuEvent;
-            [FieldOffset(4)]
-            public FOCUS_EVENT_RECORD FocusEvent;
-        };
+    [Flags]
+    public enum CharAttributes : ushort
+    {
+        /// <summary>
+        /// None.
+        /// </summary>
+        None = 0x0000,
 
-        [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
-        public struct KEY_EVENT_RECORD
-        {
-            [FieldOffset(0), MarshalAs(UnmanagedType.Bool)]
-            public bool bKeyDown;
-            [FieldOffset(4), MarshalAs(UnmanagedType.U2)]
-            public ushort wRepeatCount;
-            [FieldOffset(6), MarshalAs(UnmanagedType.U2)]
-            public ushort wVirtualKeyCode;
-            [FieldOffset(8), MarshalAs(UnmanagedType.U2)]
-            public ushort wVirtualScanCode;
-            [FieldOffset(10)]
-            public char UnicodeChar;
-            [FieldOffset(12), MarshalAs(UnmanagedType.U4)]
-            public ControlKeyState controlKeyState;
+        /// <summary>
+        /// Text color contains blue.
+        /// </summary>
+        FOREGROUND_BLUE = 0x0001,
 
-            public ConsoleKeyInfo ToConsoleKeyInfo()
-            {
-                return new ConsoleKeyInfo(
-                    UnicodeChar,
-                    (ConsoleKey)wVirtualKeyCode,
-                    controlKeyState.HasFlag(ControlKeyState.SHIFT_PRESSED),
-                    controlKeyState.HasFlag(ControlKeyState.LEFT_ALT_PRESSED)
-                    || controlKeyState.HasFlag(ControlKeyState.RIGHT_ALT_PRESSED),
-                    controlKeyState.HasFlag(ControlKeyState.LEFT_CTRL_PRESSED)
-                    || controlKeyState.HasFlag(ControlKeyState.RIGHT_CTRL_PRESSED));
-            }
-        }
+        /// <summary>
+        /// Text color contains green.
+        /// </summary>
+        FOREGROUND_GREEN = 0x0002,
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MOUSE_EVENT_RECORD
-        {
-            public COORD dwMousePosition;
-            public MouseButtonState dwButtonState;
-            public ControlKeyState dwControlKeyState;
-            public MouseEventFlags dwEventFlags;
-        }
+        /// <summary>
+        /// Text color contains red.
+        /// </summary>
+        FOREGROUND_RED = 0x0004,
 
-        public struct WINDOW_BUFFER_SIZE_RECORD
-        {
-            public COORD dwSize;
+        /// <summary>
+        /// Text color is intensified.
+        /// </summary>
+        FOREGROUND_INTENSITY = 0x0008,
 
-            public WINDOW_BUFFER_SIZE_RECORD(short x, short y)
-            {
-                dwSize = new COORD
-                {
-                    X = x,
-                    Y = y
-                };
-            }
-        }
+        /// <summary>
+        /// Background color contains blue.
+        /// </summary>
+        BACKGROUND_BLUE = 0x0010,
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MENU_EVENT_RECORD
-        {
-            public uint dwCommandId;
-        }
+        /// <summary>
+        /// Background color contains green.
+        /// </summary>
+        BACKGROUND_GREEN = 0x0020,
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct FOCUS_EVENT_RECORD
-        {
-            public uint bSetFocus;
-        }
+        /// <summary>
+        /// Background color contains red.
+        /// </summary>
+        BACKGROUND_RED = 0x0040,
 
-        //CHAR_INFO struct, which was a union in the old days
-        // so we want to use LayoutKind.Explicit to mimic it as closely
-        // as we can
-        [StructLayout(LayoutKind.Explicit)]
-        public struct CHAR_INFO
-        {
-            [FieldOffset(0)]
-            public char UnicodeChar;
-            [FieldOffset(0)]
-            public char AsciiChar;
-            [FieldOffset(2)] //2 bytes seems to work properly
-            public CharAttributes Attributes;
-        }
+        /// <summary>
+        /// Background color is intensified.
+        /// </summary>
+        BACKGROUND_INTENSITY = 0x0080,
 
-        // Enumerated type for the control messages sent to the handler routine
-        enum CtrlTypes : uint
-        {
-            CTRL_C_EVENT = 0,
-            CTRL_BREAK_EVENT,
-            CTRL_CLOSE_EVENT,
-            CTRL_LOGOFF_EVENT = 5,
-            CTRL_SHUTDOWN_EVENT
-        }
+        /// <summary>
+        /// Leading byte.
+        /// </summary>
+        COMMON_LVB_LEADING_BYTE = 0x0100,
 
-        [Flags]
-        public enum CharAttributes : ushort
-        {
-            /// <summary>
-            /// None.
-            /// </summary>
-            None = 0x0000,
+        /// <summary>
+        /// Trailing byte.
+        /// </summary>
+        COMMON_LVB_TRAILING_BYTE = 0x0200,
 
-            /// <summary>
-            /// Text color contains blue.
-            /// </summary>
-            FOREGROUND_BLUE = 0x0001,
+        /// <summary>
+        /// Top horizontal
+        /// </summary>
+        COMMON_LVB_GRID_HORIZONTAL = 0x0400,
 
-            /// <summary>
-            /// Text color contains green.
-            /// </summary>
-            FOREGROUND_GREEN = 0x0002,
+        /// <summary>
+        /// Left vertical.
+        /// </summary>
+        COMMON_LVB_GRID_LVERTICAL = 0x0800,
 
-            /// <summary>
-            /// Text color contains red.
-            /// </summary>
-            FOREGROUND_RED = 0x0004,
+        /// <summary>
+        /// Right vertical.
+        /// </summary>
+        COMMON_LVB_GRID_RVERTICAL = 0x1000,
 
-            /// <summary>
-            /// Text color is intensified.
-            /// </summary>
-            FOREGROUND_INTENSITY = 0x0008,
+        /// <summary>
+        /// Reverse foreground and background attribute.
+        /// </summary>
+        COMMON_LVB_REVERSE_VIDEO = 0x4000,
 
-            /// <summary>
-            /// Background color contains blue.
-            /// </summary>
-            BACKGROUND_BLUE = 0x0010,
+        /// <summary>
+        /// Underscore.
+        /// </summary>
+        COMMON_LVB_UNDERSCORE = 0x8000,
 
-            /// <summary>
-            /// Background color contains green.
-            /// </summary>
-            BACKGROUND_GREEN = 0x0020,
-
-            /// <summary>
-            /// Background color contains red.
-            /// </summary>
-            BACKGROUND_RED = 0x0040,
-
-            /// <summary>
-            /// Background color is intensified.
-            /// </summary>
-            BACKGROUND_INTENSITY = 0x0080,
-
-            /// <summary>
-            /// Leading byte.
-            /// </summary>
-            COMMON_LVB_LEADING_BYTE = 0x0100,
-
-            /// <summary>
-            /// Trailing byte.
-            /// </summary>
-            COMMON_LVB_TRAILING_BYTE = 0x0200,
-
-            /// <summary>
-            /// Top horizontal
-            /// </summary>
-            COMMON_LVB_GRID_HORIZONTAL = 0x0400,
-
-            /// <summary>
-            /// Left vertical.
-            /// </summary>
-            COMMON_LVB_GRID_LVERTICAL = 0x0800,
-
-            /// <summary>
-            /// Right vertical.
-            /// </summary>
-            COMMON_LVB_GRID_RVERTICAL = 0x1000,
-
-            /// <summary>
-            /// Reverse foreground and background attribute.
-            /// </summary>
-            COMMON_LVB_REVERSE_VIDEO = 0x4000,
-
-            /// <summary>
-            /// Underscore.
-            /// </summary>
-            COMMON_LVB_UNDERSCORE = 0x8000,
-
-            FOREGROUND_WHITE = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED,
-        }
+        FOREGROUND_WHITE = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED,
     }
 
     [Flags]

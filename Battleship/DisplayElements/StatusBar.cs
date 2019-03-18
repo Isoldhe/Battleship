@@ -12,11 +12,8 @@ namespace Battleship.DisplayElements
         private string _status;
         private Dictionary<string, string> _savedStatusses = new Dictionary<string, string>();
 
-        public StatusBar(int height, int width)
-        {
-            _height = height;
-            _width = width;
-        }
+        public StatusBar(int width, int height) : base(width, height)
+        { }
 
         public string Status
         {
@@ -25,26 +22,32 @@ namespace Battleship.DisplayElements
             {
                 if (_status != value)
                 {
-                    Clear();
                     _status = value;
-                    Redraw();
+                    FillBuffer();
                 }
             }
         }
 
-        public override void Redraw()
+        private void FillBuffer()
         {
-            if (string.IsNullOrWhiteSpace(Status)) return;
+            var lines = Status?.WordWrap(Width, Height) ?? new List<string>();
 
-            var lines = Status.WordWrap(Width, Height);
-
-            Console.SetCursorPosition(Left, Top);
-            for (int i = 0; i < lines.Count; i++)
+            for (int row = 0; row < Height; row++)
             {
-                Console.CursorLeft = Left;
-                Console.CursorTop = Top + i;
-                Console.Write(lines[i]);
+                for (int column = 0; column < Width; column++)
+                {
+                    if (row < lines.Count && column < lines[row].Length)
+                    {
+                        Buffer[row][column].Character = lines[row][column];
+                    }
+                    else
+                    {
+                        Buffer[row][column].Character = ' ';
+                    }
+                }
             }
+
+            Redraw();
         }
 
         public void SaveStatus(string key)

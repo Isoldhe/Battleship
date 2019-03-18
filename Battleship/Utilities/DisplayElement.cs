@@ -8,23 +8,30 @@ namespace Battleship.Utilities
     {
         public event DisplayElementChangedEvent DisplayElementChanged;
 
-        protected int _top;
-        protected int _left;
-        protected int _width;
-        protected int _height;
+        private int _top;
+        private int _left;
 
-        protected void Clear()
+        public DisplayElement(int width, int height)
         {
-            string whitespace = string.Empty.PadRight(Width);
-            for (int i = 0; i < Height; i++)
-            {
-                Console.CursorLeft = Left;
-                Console.CursorTop = Top + i;
-                Console.Write(whitespace);
-            }
+            Width = width;
+            Height = height;
+
+            Buffer = ExtensionMethods.CreateMultiDimensionalArray(
+                width, 
+                height, 
+                (row, column) => new CHAR_INFO() { Attributes = CharAttributes.FOREGROUND_GREEN | CharAttributes.FOREGROUND_INTENSITY });
         }
 
-        public abstract void Redraw();
+        protected CHAR_INFO[][] Buffer { get; private set; }
+
+        public void Redraw()
+        {
+            LowLevelConsoleFunctions.WriteConsoleOutput(Buffer, _top, _left);
+        }
+
+        public int Width { get; }
+
+        public int Height { get; }
 
         public virtual int Top
         {
@@ -33,7 +40,7 @@ namespace Battleship.Utilities
             {
                 if (value < 0 || value + Height > Console.LargestWindowHeight) return;
                 _top = value;
-                TriggerDisplayElementChangedEvent();
+                OnDisplayElementChanged();
             }
         }
 
@@ -44,31 +51,11 @@ namespace Battleship.Utilities
             {
                 if (value < 0 || value + Width > Console.LargestWindowWidth) return;
                 _left = value;
-                TriggerDisplayElementChangedEvent();
+                OnDisplayElementChanged();
             }
         }
 
-        public virtual int Width
-        {
-            get => _width;
-            protected set
-            {
-                _width = value;
-                TriggerDisplayElementChangedEvent();
-            }
-        }
-
-        public virtual int Height
-        {
-            get => _height;
-            protected set
-            {
-                _height = value;
-                TriggerDisplayElementChangedEvent();
-            }
-        }
-
-        protected void TriggerDisplayElementChangedEvent()
+        protected void OnDisplayElementChanged()
         {
             DisplayElementChanged?.Invoke();
         }
