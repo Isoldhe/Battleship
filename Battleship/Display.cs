@@ -32,12 +32,19 @@ namespace Battleship
             element.DisplayElementChanged += DisplayElementChanged;
         }
 
+        public DisplayElement HitTest(short x, short y)
+        {
+            return _elements.FirstOrDefault(element =>
+            x >= element.Left && x < element.Left + element.Width
+            && y >= element.Top && y < element.Top + element.Height);
+        }
+
         private void DisplayElementChanged()
         {
             RefreshDisplay();
         }
 
-        private void RefreshDisplay()
+        public void RefreshDisplay()
         {
             Console.Clear();
             if (!_elements.Any()) return;
@@ -52,16 +59,25 @@ namespace Battleship
                 element.Redraw();
             }
         }
+
+        public bool CheckSize()
+        {
+            return Console.WindowWidth == _totalWidth && Console.WindowHeight == _totalHeight
+                && Console.BufferWidth == _totalWidth && Console.BufferHeight == _totalHeight;
+        }
         
         private void ResetView()
         {
             Console.CursorVisible = false;
 
-            Console.SetWindowSize(_totalWidth, _totalHeight);
-            Console.SetBufferSize(_totalWidth, _totalHeight);
+            if (!CheckSize())
+            {
+                Console.SetWindowSize(_totalWidth, _totalHeight);
+                Console.SetBufferSize(_totalWidth, _totalHeight);
 
-            //set size again after setting buffer to clear the scrollbar area
-            Console.SetWindowSize(_totalWidth, _totalHeight);
+                //set size again after setting buffer to clear the scrollbar area
+                Console.SetWindowSize(_totalWidth, _totalHeight);
+            }
         }
     }
 }

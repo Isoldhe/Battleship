@@ -10,42 +10,67 @@ namespace Battleship.DisplayElements
     public class StatusBar : DisplayElement
     {
         private string _status;
+        private Dictionary<string, string> _savedStatusses = new Dictionary<string, string>();
 
-        public StatusBar(int height, int width)
-        {
-            _height = height;
-            _width = width;
-        }
+        public StatusBar(int width, int height) : base(width, height)
+        { }
 
         public string Status
         {
             get => _status;
             set
             {
-                Clear();
-                _status = value;
-                Redraw();
+                if (_status != value)
+                {
+                    _status = value;
+                    FillBuffer();
+                }
             }
         }
 
-        public override void Redraw()
+        private void FillBuffer()
         {
-            if (string.IsNullOrWhiteSpace(Status)) return;
+            var lines = Status?.WordWrap(Width, Height) ?? new List<string>();
 
-            var lines = Status.WordWrap(Width, Height);
-
-            Console.SetCursorPosition(Left, Top);
-            bool preventFinalCharacterWrite = Left + Width == Console.WindowWidth;
-            for (int i = 0; i < lines.Count; i++)
+            for (int row = 0; row < Height; row++)
             {
-                Console.CursorLeft = Left;
-                Console.CursorTop = Top + i;
-
-                if (preventFinalCharacterWrite && Top + i + 1 == Console.WindowHeight)
-                    lines[i] = lines[i].Remove(0, 1);
-
-                Console.Write(lines[i]);
+                for (int column = 0; column < Width; column++)
+                {
+                    if (row < lines.Count && column < lines[row].Length)
+                    {
+                        Buffer[row][column].Character = lines[row][column];
+                    }
+                    else
+                    {
+                        Buffer[row][column].Character = ' ';
+                    }
+                }
             }
+
+            Redraw();
+        }
+
+        public void SaveStatus(string key)
+        {
+            _savedStatusses[key] = Status;
+        }
+
+        public void LoadStatus(string key)
+        {
+            if (_savedStatusses.ContainsKey(key))
+            {
+                Status = _savedStatusses[key];
+            }
+        }
+
+        public void DeleteStatus(string key)
+        {
+            _savedStatusses.Remove(key);
+        }
+
+        public bool StatusExists(string key)
+        {
+            return _savedStatusses.ContainsKey(key);
         }
     }
 }
