@@ -12,7 +12,6 @@ namespace Battleship.DisplayElements
 {
     public class BattleField : DisplayElement
     {
-
         private static readonly int PLAYFIELD_LEFT = 2;
         private static readonly int PLAYFIELD_TOP = 1;
         private static readonly int PLAYFIELD_HORIZONTAL_SPACING = 2;
@@ -32,39 +31,33 @@ namespace Battleship.DisplayElements
         public BattleField() : this(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         { }
 
-        public BattleField(int width, int height)
+        public BattleField(int width, int height) : base(
+            width * (PLAYFIELD_HORIZONTAL_SPACING + 1)
+                + PLAYFIELD_HORIZONTAL_SPACING
+                + PLAYFIELD_LEFT,
+            height * (PLAYFIELD_VERTICAL_SPACING + 1)
+                + PLAYFIELD_VERTICAL_SPACING
+                + PLAYFIELD_TOP)
         {
             if (width < MIN_WIDTH) width = MIN_WIDTH;
             if (width > MAX_WIDTH) width = MAX_WIDTH;
             if (height < MIN_HEIGHT) height = MIN_HEIGHT;
             if (height > MAX_HEIGHT) height = MAX_HEIGHT;
 
-            _playField = new BoardPosition[height][];
-            for (int row = 0; row < height; row++)
-            {
-                _playField[row] = new BoardPosition[width];
-                for (int column = 0; column < width; column++)
+            _playField = ExtensionMethods.CreateMultiDimensionalArray(
+                width,
+                height,
+                (row, column) =>
                 {
                     var position = new BoardPosition(row, column);
-                    _playField[row][column] = position;
                     BoardPositions[position.Coordinates] = position;
-                }
-            }
+                    return position;
+                });
 
-            _width =
-                _playField[0].Length * (PLAYFIELD_HORIZONTAL_SPACING + 1)
-                + PLAYFIELD_HORIZONTAL_SPACING
-                + PLAYFIELD_LEFT;
-            _height =
-                _playField.Length * (PLAYFIELD_VERTICAL_SPACING + 1)
-                + PLAYFIELD_VERTICAL_SPACING
-                + PLAYFIELD_TOP;
+            FillBuffer();
         }
 
-        public Dictionary<string, BoardPosition> BoardPositions { get; } = new Dictionary<string, BoardPosition>(StringComparer.OrdinalIgnoreCase);
-        public BoardPosition SelectedPosition { get; private set; }
-
-        public override void Redraw()
+        protected void FillBuffer()
         {
             WriteRowIndex();
             WriteColumnIndex();
@@ -72,19 +65,24 @@ namespace Battleship.DisplayElements
             {
                 for (int y = 0; y < _playField.Length; y++) //rowIndex
                 {
-                    SetCursorToRowColumn(y, x);
                     char spot = _playField[y][x].Value;
-                    if (char.IsLetter(spot))
-                    {
-                        Console.Write(spot);
-                    }
-                    else
-                    {
-                        Console.Write('~');
-                    }
+                    var row = RowToBufferPosition(y);
+                    var column = ColumnToBufferPosition(x);
+                    Buffer[row][column].Character = char.IsLetter(spot) ? spot : ' ';
+                }
+            }
+
+            for (int row = PLAYFIELD_TOP; row < Height; row++)
+            {
+                for (int column = PLAYFIELD_LEFT; column < Width; column++)
+                {
+                    Buffer[row][column].Attributes = CharAttributes.BACKGROUND_BLUE | CharAttributes.FOREGROUND_WHITE | CharAttributes.FOREGROUND_INTENSITY;
                 }
             }
         }
+
+        public Dictionary<string, BoardPosition> BoardPositions { get; } = new Dictionary<string, BoardPosition>(StringComparer.OrdinalIgnoreCase);
+        public BoardPosition SelectedPosition { get; private set; }
 
         public bool AddShip(Ship ship)
         {
@@ -96,7 +94,7 @@ namespace Battleship.DisplayElements
 
             for (int i = 0; i < ship.Size; i++)
             {
-                if (ship.Position == Orientation.Horizontal)
+                if (ship.Orientation == Orientation.Horizontal)
                 {
                     _playField[ship.YLocation][ship.XLocation + i].Value = ship.Name[0];
                 }
@@ -125,6 +123,29 @@ namespace Battleship.DisplayElements
             }
         }
 
+        public void SelectPosition(int row, int column)
+        {
+            if (row >= 0 && row < _playField.Length &&
+                column >= 0 && column < _playField[0].Length)
+            {
+                if (SelectedPosition != null)
+                {
+                    DeselectPosition();
+                }
+
+                SelectedPosition = _playField[row][column];
+
+                DrawSelectedPosition();
+            }
+        }
+
+        public void SelectPositionNear(short x, short y)
+        {
+            var column = CursorPositionToColumn(x);
+            var row = CursorPositionToRow(y);
+            SelectPosition(row, column);
+        }
+
         public void DeselectPosition()
         {
             ClearSelectedPosition();
@@ -133,70 +154,77 @@ namespace Battleship.DisplayElements
 
         private void ClearSelectedPosition()
         {
-            SetCursorToRowColumn(SelectedPosition.Row, SelectedPosition.Column);
-            Console.CursorLeft--;
-            Console.Write(' ');
-            Console.CursorLeft++;
-            Console.Write(' ');
+            var row = RowToBufferPosition(SelectedPosition.Row);
+            var column = ColumnToBufferPosition(SelectedPosition.Column);
+            Buffer[row][column - 1].Character = ' ';
+            Buffer[row][column + 1].Character = ' ';
+            Redraw();
         }
 
         private void DrawSelectedPosition()
         {
-            SetCursorToRowColumn(SelectedPosition.Row, SelectedPosition.Column);
-            Console.CursorLeft--;
-            Console.Write('>');
-            Console.CursorLeft++;
-            Console.Write('<');
+            var row = RowToBufferPosition(SelectedPosition.Row);
+            var column = ColumnToBufferPosition(SelectedPosition.Column);
+            Buffer[row][column - 1].Character = '>';
+            Buffer[row][column + 1].Character = '<';
+            Redraw();
         }
 
-        private void SetCursorToRowColumn(int row, int column)
-        {
-            Console.SetCursorPosition(
-                ColumnToCursorPosition(column),
-                RowToCursorPosition(row));
-        }
-
-        private int RowToCursorPosition(int row)
+        private int RowToBufferPosition(int row)
         {
             return 
                 row * (PLAYFIELD_VERTICAL_SPACING + 1) 
                 + PLAYFIELD_VERTICAL_SPACING
-                + PLAYFIELD_TOP
-                + Top;
+                + PLAYFIELD_TOP;
         }
 
-        private int ColumnToCursorPosition(int column)
+        private int ColumnToBufferPosition(int column)
         {
             return 
                 column * (PLAYFIELD_HORIZONTAL_SPACING + 1)
                 + PLAYFIELD_HORIZONTAL_SPACING
-                + PLAYFIELD_LEFT
-                + Left;
+                + PLAYFIELD_LEFT;
+        }
+
+        private int CursorPositionToRow(int y)
+        {
+            return
+                (y
+                - PLAYFIELD_VERTICAL_SPACING
+                - PLAYFIELD_TOP
+                - Top) / (PLAYFIELD_VERTICAL_SPACING + 1);
+        }
+
+        private int CursorPositionToColumn(int x)
+        {
+            return
+                (x + 1
+                - PLAYFIELD_HORIZONTAL_SPACING
+                - PLAYFIELD_LEFT
+                - Left) / (PLAYFIELD_HORIZONTAL_SPACING + 1);
         }
 
         private void WriteRowIndex()
         {
             int verticalCoordinates = 1;
 
-            Console.SetCursorPosition(Left, PLAYFIELD_TOP);
-
             for (int row = 0; row < _playField.Length; row++)
             {
-                Console.CursorTop = RowToCursorPosition(row);
-                Console.CursorLeft = Left;
-                Console.Write(verticalCoordinates++);
+                var coords = verticalCoordinates++.ToString().PadLeft(2);
+                for (int column = 0; column < coords.Length; column++)
+                {
+                    Buffer[RowToBufferPosition(row)][column].Character = coords[column];
+                }
             }
         }
 
         private void WriteColumnIndex()
         {
             char horizontalCoordinates = 'A';
-            Console.SetCursorPosition(PLAYFIELD_LEFT, Top);
 
             for (int column = 0; column < _playField[0].Length; column++)
             {
-                Console.CursorLeft = ColumnToCursorPosition(column);
-                Console.Write(horizontalCoordinates++);
+                Buffer[0][ColumnToBufferPosition(column)].Character = horizontalCoordinates++;
             }
         }
     }

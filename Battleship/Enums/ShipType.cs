@@ -2,10 +2,10 @@
 {
     public enum ShipType
     {
-        Destroyer,
         AircraftCarrier,
-        Submarine,
-        Cruiser,
         Battleship,
+        Cruiser,
+        Destroyer,
+        Submarine,
     }
 }

@@ -44,8 +44,10 @@
   <ItemGroup>
     <Compile Include="DisplayElements\BattleField.cs" />
     <Compile Include="GameModels\BoardPosition.cs" />
-    <Compile Include="Display.cs" />
     <Compile Include="GameModels\Bot.cs" />
+    <Compile Include="Display.cs" />
+    <Compile Include="DisplayElements\ShipTypeSelector.cs" />
+    <Compile Include="Utilities\LowLevelConsoleFunctions.cs" />
     <Compile Include="Utilities\DisplayElement.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Program.cs" />

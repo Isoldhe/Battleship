@@ -1,6 +1,5 @@
 using Battleship.DisplayElements;
-using Battleship.Enums;
-using Battleship.GameModels;
+using Battleship.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +11,12 @@ namespace Battleship
 {
     public class Game
     {
-        private BattleField _battleField;
-        private Display _display;
-        private StatusBar _statusBar;
-        private StringBuilder _input = new StringBuilder();
-        private string _statusBeforeInput;
+        private readonly BattleField _battleField;
+        private readonly Display _display;
+        private readonly StatusBar _statusBar;
+        private readonly ShipTypeSelector _shipTypeSelector;
+        private readonly StringBuilder _input = new StringBuilder();
+        private bool _quit;
         private Bot _bot;
 
         public Game()
@@ -32,111 +32,290 @@ namespace Battleship
 
             _bot = new Bot();
 
-            LoadTestData();
-
-            _statusBar = new StatusBar(3, 50)
+            _statusBar = new StatusBar(50, 3)
             {
                 Left = 1,
                 Top = _battleField.Top + _battleField.Height + 1,
-                Status = "Welcome to Battleship. Start typing to enter a coordinate."
+                Status = "Welcome to Battleship. Start by placing your own ships."
+            };
+
+            _shipTypeSelector = new ShipTypeSelector(30, 20)
+            {
+                Left = _battleField.Left + _battleField.Width + 1,
+                Top = 3,
             };
 
             _display.AddElement(_battleField);
             _display.AddElement(_statusBar);
-
+            _display.AddElement(_shipTypeSelector);
             _display.AddElement(_bot.BotBattleField);
         }
 
-        private void LoadTestData()
-        {
-            _battleField.AddShip(new Ship(ShipType.Destroyer, 0, 0, Orientation.Horizontal));
-            _battleField.AddShip(new Ship(ShipType.AircraftCarrier, 9, 2, Orientation.Vertical));
-            _battleField.AddShip(new Ship(ShipType.Submarine, 5, 3, Orientation.Horizontal));
-            _battleField.AddShip(new Ship(ShipType.Cruiser, 3, 1, Orientation.Vertical));
-            _battleField.AddShip(new Ship(ShipType.Battleship, 6, 7, Orientation.Vertical));
-        }
+        public static bool WindowInvalidated { get; private set; }
 
         public void Run()
         {
-            var keyStroke = new ConsoleKeyInfo();
+            var previousMouseButtonState = MouseButtonState.ALL_RELEASED;
 
-            bool keepPlaying = true;
-            while (keepPlaying)
+            foreach (var consoleInput in LowLevelConsoleFunctions.ReadConsoleInput())
             {
-                keyStroke = Console.ReadKey(true);
-                switch (keyStroke.Key)
+                switch (consoleInput.EventType)
                 {
-                    //TODO implement cursor
-                    case ConsoleKey.LeftArrow:
-                        if (_input.Length > 0)
+                    case InputEventType.KEY_EVENT:
+                        if (consoleInput.KeyEvent.KeyDown)
                         {
-                            CancelInput();
-                        }
-                        break;
-                    case ConsoleKey.UpArrow:
-                        if (_input.Length > 0)
-                        {
-                            CancelInput();
-                        }
-                        break;
-                    case ConsoleKey.RightArrow:
-                        if (_input.Length > 0)
-                        {
-                            CancelInput();
-                        }
-                        break;
-                    case ConsoleKey.DownArrow:
-                        if (_input.Length > 0)
-                        {
-                            CancelInput();
-                        }
-                        break;
-
-                    case ConsoleKey.Backspace:
-                        _input.Remove(_input.Length - 1, 1);
-                        InputChanged();
-                        break;
-                    default:
-                        if (char.IsLetterOrDigit(keyStroke.KeyChar))
-                        {
-                            if (_input.Length < 20)
+                            for (int i = 0; i < consoleInput.KeyEvent.RepeatCount; i++)
                             {
-                                _input.Append(keyStroke.KeyChar);
-                                InputChanged();
+                                HandleKeyEvent(consoleInput.KeyEvent.ToConsoleKeyInfo());
                             }
+                        }
+
+                        break;
+                    case InputEventType.MOUSE_EVENT:
+                        HandleMouseEvent(
+                            previousMouseButtonState, 
+                            consoleInput.MouseEvent.EventFlags,
+                            consoleInput.MouseEvent.ButtonState,
+                            consoleInput.MouseEvent.MousePosition);
+
+                        previousMouseButtonState = consoleInput.MouseEvent.ButtonState;
+                        break;
+                    case InputEventType.WINDOW_BUFFER_SIZE_EVENT:
+                        if (_display.CheckSize())
+                        {
+                            //window size is correct
+                            RevalidateWindow();
                         }
                         else
                         {
-                            //do nothing
+                            //window was resized
+                            InvalidateWindow();
                         }
                         break;
-                    case ConsoleKey.Enter:
-                    case ConsoleKey.Spacebar:
-                        _battleField.SelectPosition(_input.ToString());
-                        CancelInput();
-                        break;
-
-
-                    case ConsoleKey.Escape:
-                        if (_input.Length > 0)
-                        {
-                            CancelInput();
-                            break;
-                        }
-
-                        if (_battleField.SelectedPosition != null)
-                        {
-                            _battleField.DeselectPosition();
-                            break;
-                        }
-
-                        //quit
-                        keepPlaying = PromptUser();
-                        // TODO: if user types Y to keep playing, show previous status bar
-                        _statusBar.Status = "";
+                    default:
                         break;
                 }
+
+                if (_quit)
+                {
+                    break;
+                }
             }
+        }
+
+        private void HandleMouseEvent(
+            MouseButtonState previousMouseButtonState, 
+            MouseEventFlags eventFlags,
+            MouseButtonState currentButtonState,
+            COORD mousePosition)
+        {
+            if (eventFlags.HasFlag(MouseEventFlags.MOUSE_MOVED)
+                && currentButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
+            {
+                var elementHit = _display.HitTest(mousePosition.X, mousePosition.Y);
+                if (elementHit == _battleField)
+                {
+                    _battleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
+                }
+            }
+
+            if (eventFlags.HasFlag(MouseEventFlags.MOUSE_BUTTON_STATE_CHANGED))
+            {
+                if (currentButtonState == MouseButtonState.ALL_RELEASED
+                    && previousMouseButtonState == MouseButtonState.FROM_LEFT_1ST_BUTTON_PRESSED)
+                {
+                    //left button clicked
+                    var elementHit = _display.HitTest(mousePosition.X, mousePosition.Y);
+                    if (elementHit == _battleField)
+                    {
+                        _battleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
+                        if (_battleField.SelectedPosition != null)
+                        {
+                            ConfirmSelectedPosition();
+                        }
+                    }
+                }
+            }
+        }
+
+        private void HandleKeyEvent(ConsoleKeyInfo keyStroke)
+        {
+            switch (keyStroke.Key)
+            {
+                case ConsoleKey.LeftArrow:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                    }
+
+                    if (_battleField.SelectedPosition == null)
+                    {
+                        _battleField.SelectPosition(0, 0);
+                    }
+                    else
+                    {
+                        _battleField.SelectPosition(
+                            _battleField.SelectedPosition.Row, 
+                            _battleField.SelectedPosition.Column - 1);
+                    }
+
+                    break;
+                case ConsoleKey.UpArrow:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                    }
+
+                    if (_battleField.SelectedPosition == null)
+                    {
+                        _battleField.SelectPosition(0, 0);
+                    }
+                    else
+                    {
+                        _battleField.SelectPosition(
+                            _battleField.SelectedPosition.Row - 1,
+                            _battleField.SelectedPosition.Column);
+                    }
+
+                    break;
+                case ConsoleKey.RightArrow:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                    }
+
+                    if (_battleField.SelectedPosition == null)
+                    {
+                        _battleField.SelectPosition(0, 0);
+                    }
+                    else
+                    {
+                        _battleField.SelectPosition(
+                            _battleField.SelectedPosition.Row,
+                            _battleField.SelectedPosition.Column + 1);
+                    }
+
+                    break;
+                case ConsoleKey.DownArrow:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                    }
+
+                    if (_battleField.SelectedPosition == null)
+                    {
+                        _battleField.SelectPosition(0, 0);
+                    }
+                    else
+                    {
+                        _battleField.SelectPosition(
+                            _battleField.SelectedPosition.Row + 1,
+                            _battleField.SelectedPosition.Column);
+                    }
+
+                    break;
+
+                case ConsoleKey.Backspace:
+                    if (_input.Length > 0)
+                    {
+                        _input.Remove(_input.Length - 1, 1);
+                        InputChanged();
+                    }
+                    break;
+                default:
+                    if (char.IsLetterOrDigit(keyStroke.KeyChar))
+                    {
+                        if (_input.Length < 20)
+                        {
+                            _input.Append(keyStroke.KeyChar);
+                            InputChanged();
+                        }
+                    }
+                    else
+                    {
+                        //do nothing
+                    }
+                    break;
+                case ConsoleKey.Enter:
+                case ConsoleKey.Spacebar:
+                    if (WindowInvalidated)
+                    {
+                        RevalidateWindow();
+                        break;
+                    }
+
+                    if (_input.Length > 0)
+                    {
+                        var inputString = _input.ToString();
+                        if (inputString.Equals("QUIT", StringComparison.OrdinalIgnoreCase) ||
+                            inputString.Equals("EXIT", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _quit = true;
+                            break;
+                        }
+                        else
+                        {
+                            _battleField.SelectPosition(_input.ToString());
+                        }
+                        CancelInput();
+                    }
+
+                    if (_battleField.SelectedPosition != null)
+                    {
+                        ConfirmSelectedPosition();
+                        break;
+                    }
+                    break;
+
+
+                case ConsoleKey.Escape:
+                    if (_input.Length > 0)
+                    {
+                        CancelInput();
+                        break;
+                    }
+
+                    if (_battleField.SelectedPosition != null)
+                    {
+                        _battleField.DeselectPosition();
+                        break;
+                    }
+
+                    _statusBar.SaveStatus("quit");
+                    if (PromptUser())
+                    {
+                        //quit
+                        _quit = true;
+                        break;
+                    }
+
+                    //don't quit
+                    _statusBar.LoadStatus("quit");
+                    break;
+            }
+        }
+
+        private void ConfirmSelectedPosition()
+        {
+            //TODO: do something with confirmed position
+            //_battleField.DeselectPosition();
+        }
+
+        private void InvalidateWindow()
+        {
+            if (!WindowInvalidated)
+            {
+                WindowInvalidated = true;
+                Console.SetCursorPosition(0, 0);
+                Console.Clear();
+                Console.Write("Window size invalid. Press enter to auto-resize window.");
+            }
+        }
+
+        private void RevalidateWindow()
+        {
+            _display.RefreshDisplay();
+            WindowInvalidated = false;
         }
 
         private void CancelInput()
@@ -149,16 +328,19 @@ namespace Battleship
         {
             if (_input.Length > 0)
             {
-                if (_statusBeforeInput == null)
+                if (!_statusBar.StatusExists("input"))
                 {
-                    _statusBeforeInput = _statusBar.Status;
+                    _statusBar.SaveStatus("input");
                 }
                 _statusBar.Status = $"Coordinate: {_input}";
             }
             else
             {
-                _statusBar.Status = _statusBeforeInput;
-                _statusBeforeInput = null;
+                if (_statusBar.StatusExists("input"))
+                {
+                    _statusBar.LoadStatus("input");
+                    _statusBar.DeleteStatus("input");
+                }
             }
         }
 
@@ -168,19 +350,18 @@ namespace Battleship
 
             while (true)
             {
-                var answer = Console.ReadLine();
-
-                if (answer.Equals("y", StringComparison.OrdinalIgnoreCase))
+                switch (Console.ReadKey(true).Key)
                 {
-                    return false;
-                }
-                else if (answer.Equals("n", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-                else
-                {
-                    _statusBar.Status = "Invalid input. Are you sure you want to quit? (Y/N)   ";
+                    case ConsoleKey.Y:
+                    case ConsoleKey.Enter:
+                    case ConsoleKey.Spacebar:
+                        return true;
+                    case ConsoleKey.N:
+                    case ConsoleKey.Escape:
+                        return false;
+                    default:
+                        _statusBar.Status = "Invalid input. Are you sure you want to quit? (Y/N)   ";
+                        break;
                 }
             }
         }
