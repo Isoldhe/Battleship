@@ -9,7 +9,7 @@ namespace Battleship.GameModels
 {
     public class Ship
     {
-        public string Name { get; }
+        public string Name { get; private set; }
         public ShipType ShipType { get; }
         public int Size { get; set; }
         public int XLocation { get; set; }

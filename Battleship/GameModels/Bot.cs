@@ -20,7 +20,7 @@ namespace Battleship.GameModels
 
             BotBattleField = new BattleField()
             {
-                Left = 50,
+                Left = 65,
                 Top = 1,
             };
 
@@ -74,7 +74,7 @@ namespace Battleship.GameModels
                     xLocation = random.Next(0, 9);
                     yLocation = random.Next(0, maxValue);
                 }
-                
+
                 // FIXME: ships overlap each other.
                 BotBattleField.AddShip(new Ship(shipType, xLocation, yLocation, orientation));
             }

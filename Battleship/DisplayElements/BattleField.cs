@@ -61,6 +61,7 @@ namespace Battleship.DisplayElements
         {
             WriteRowIndex();
             WriteColumnIndex();
+
             for (int x = 0; x < _playField[0].Length; x++) //colIndex
             {
                 for (int y = 0; y < _playField.Length; y++) //rowIndex
@@ -104,6 +105,8 @@ namespace Battleship.DisplayElements
                 }
             }
             _ships.Add(ship);
+
+            FillBuffer();
 
             return true;
         }

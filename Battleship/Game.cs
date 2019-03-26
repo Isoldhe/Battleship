@@ -1,4 +1,5 @@
 using Battleship.DisplayElements;
+using Battleship.GameModels;
 using Battleship.Utilities;
 using System;
 using System.Collections.Generic;
