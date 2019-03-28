@@ -96,12 +96,28 @@ namespace Battleship.DisplayElements
             for (int i = 0; i < ship.Size; i++)
             {
                 if (ship.Orientation == Orientation.Horizontal)
-                {
-                    _playField[ship.YLocation][ship.XLocation + i].Value = ship.Name[0];
+                {    
+                    if (_playField[ship.YLocation][ship.XLocation + i].Value == ' ')
+                    {
+                        _playField[ship.YLocation][ship.XLocation + i].Value = ship.Name[0];
+                    }
+                    else
+                    {
+                        // Spot is already taken
+                        return false;
+                    }
                 }
                 else
                 {
-                    _playField[ship.YLocation + i][ship.XLocation].Value = ship.Name[0];
+                    if (_playField[ship.YLocation + i][ship.XLocation].Value == ' ')
+                    {
+                        _playField[ship.YLocation + i][ship.XLocation].Value = ship.Name[0];
+                    }
+                    else
+                    {
+                        // Spot is already taken
+                        return false;
+                    }
                 }
             }
             _ships.Add(ship);

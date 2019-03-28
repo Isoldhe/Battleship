@@ -31,16 +31,16 @@ namespace Battleship.GameModels
         private void PlaceShips()
         {
             Random random = new Random();
+            ShipType[] shipTypes = (ShipType[])Enum.GetValues(typeof(ShipType));
 
-            // For each shiptype, create random position
-            foreach (ShipType shipType in (ShipType[]) Enum.GetValues(typeof(ShipType)))
+            for (int i = 0; i < shipTypes.Length; i++)
             {
                 Orientation orientation;
                 int maxValue = 10;
                 int xLocation = 0;
                 int yLocation = 0;
 
-                switch (shipType)
+                switch (shipTypes[i])
                 {
                     case ShipType.Destroyer:
                         maxValue -= 2;
@@ -74,9 +74,13 @@ namespace Battleship.GameModels
                     xLocation = random.Next(0, 9);
                     yLocation = random.Next(0, maxValue);
                 }
-
-                // FIXME: ships overlap each other.
-                BotBattleField.AddShip(new Ship(shipType, xLocation, yLocation, orientation));
+                
+                bool addedShip = BotBattleField.AddShip(new Ship(shipTypes[i], xLocation, yLocation, orientation));
+                if (!addedShip && i != 0)
+                {
+                    // redo last loop to try placing ship again
+                    i--;
+                }
             }
         }
     }
