@@ -118,6 +118,10 @@ namespace Battleship
                 {
                     _battleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
                 }
+                if (elementHit == _bot.BotBattleField)
+                {
+                    _bot.BotBattleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
+                }
             }
 
             if (eventFlags.HasFlag(MouseEventFlags.MOUSE_BUTTON_STATE_CHANGED))
@@ -131,6 +135,15 @@ namespace Battleship
                     {
                         _battleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
                         if (_battleField.SelectedPosition != null)
+                        {
+                            ConfirmSelectedPosition();
+                        }
+                    }
+
+                    if (elementHit == _bot.BotBattleField)
+                    {
+                        _bot.BotBattleField.SelectPositionNear(mousePosition.X, mousePosition.Y);
+                        if (_bot.BotBattleField.SelectedPosition != null)
                         {
                             ConfirmSelectedPosition();
                         }
