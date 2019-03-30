@@ -103,7 +103,12 @@ namespace Battleship.DisplayElements
                     }
                     else
                     {
-                        // Spot is already taken
+                        // Spot is already taken, remove ship from all spots
+                        for (int j = 0; j < i; j++)
+                        {
+                            _playField[ship.YLocation][ship.XLocation + j].Value = ' ';
+                        }
+                        // and return alse
                         return false;
                     }
                 }
@@ -115,7 +120,12 @@ namespace Battleship.DisplayElements
                     }
                     else
                     {
-                        // Spot is already taken
+                        // Spot is already taken, remove ship from all spots
+                        for (int j = 0; j < i; j++)
+                        {
+                            _playField[ship.YLocation + j][ship.XLocation].Value = ' ';
+                        }
+                        // and return alse
                         return false;
                     }
                 }
